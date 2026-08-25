@@ -1,14 +1,13 @@
-"""FastAPI entrypoint.
-
-Phase 0: a health endpoint and a data-freshness stub. The ledger order endpoint
-lands in Phase 1 on top of the domain core in app/domain/.
-"""
+"""FastAPI entrypoint."""
 
 from datetime import datetime, timezone
 
 from fastapi import FastAPI
 
+from app.routers import orders
+
 app = FastAPI(title="Draftfolio API", version="0.1.0")
+app.include_router(orders.router, tags=["orders"])
 
 
 @app.get("/health")
@@ -17,5 +16,5 @@ def health() -> dict:
     return {
         "status": "ok",
         "time": datetime.now(timezone.utc).isoformat(),
-        "data_freshness": None,  # Phase 1: last market-data timestamp
+        "data_freshness": None,  # Phase 1+: last market-data timestamp
     }
