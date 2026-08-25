@@ -59,6 +59,7 @@ class AnalyticsOut(BaseModel):
     sortino: float | None
     max_drawdown: float | None
     benchmark: str | None
+    benchmark_return: float | None
     beta: float | None
     alpha: float | None
     tracking_error: float | None

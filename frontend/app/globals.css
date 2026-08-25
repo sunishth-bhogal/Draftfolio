@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+/* Design language: "premium financial product with a sports pulse."
+   Warm off-white, near-black type, one lime accent, big tabular numbers. */
+@theme {
+  --color-cream: #faf8f2;
+  --color-card: #ffffff;
+  --color-ink: #141210;
+  --color-ink-soft: #6b655c;
+  --color-ink-faint: #9a938a;
+  --color-line: #e9e3d6;
+  --color-accent: #c3f53c;
+  --color-accent-deep: #3d4a12;
+  --color-up: #137a56;
+  --color-down: #c23b2b;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+html,
+body {
+  background: var(--color-cream);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Financial figures: tight, aligned, unmistakably numeric. */
+.num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}

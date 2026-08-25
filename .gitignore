@@ -15,3 +15,9 @@ node_modules/
 .DS_Store
 .vscode/
 .idea/
+
+# frontend
+frontend/node_modules/
+frontend/.next/
+frontend/next-env.d.ts
+frontend/.env.local
