@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import Portfolio
+from app.services import analytics as analytics_service
 from app.services import valuation as val_service
 
 router = APIRouter()
@@ -47,6 +48,23 @@ class ReturnPointOut(BaseModel):
     equity: float
     daily_return: float | None
     cumulative_return: float | None
+
+
+class AnalyticsOut(BaseModel):
+    periods: int
+    cumulative_return: float | None
+    annualized_return: float | None
+    annualized_volatility: float | None
+    sharpe: float | None
+    sortino: float | None
+    max_drawdown: float | None
+    benchmark: str | None
+    beta: float | None
+    alpha: float | None
+    tracking_error: float | None
+    hhi: float | None
+    effective_holdings: float | None
+    notes: list[str]
 
 
 def _load(db: Session, portfolio_id: uuid.UUID) -> Portfolio:
@@ -113,3 +131,17 @@ def get_returns(portfolio_id: uuid.UUID, db: Session = Depends(get_db)) -> list[
         )
         for p in val_service.return_series(db, portfolio_id)
     ]
+
+
+@router.get("/portfolios/{portfolio_id}/analytics", response_model=AnalyticsOut)
+def get_analytics(
+    portfolio_id: uuid.UUID,
+    benchmark: str | None = None,
+    rf: float = 0.0,
+    db: Session = Depends(get_db),
+) -> AnalyticsOut:
+    pf = _load(db, portfolio_id)
+    a = analytics_service.portfolio_analytics(
+        db, portfolio_id, pf.base_currency, benchmark=benchmark, rf_annual=rf
+    )
+    return AnalyticsOut(**a.__dict__)
