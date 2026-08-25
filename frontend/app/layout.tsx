@@ -24,10 +24,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <span className="font-semibold tracking-tight text-lg">Draftfolio</span>
               </Link>
               <nav className="flex items-center gap-6 text-sm text-ink-soft">
+                <Link href="/draft" className="hover:text-ink transition-colors">
+                  Draft
+                </Link>
                 <Link href="/" className="hover:text-ink transition-colors">
                   Leaderboard
                 </Link>
-                <span className="text-ink-faint">Draft · Compete · Understand</span>
               </nav>
             </div>
           </header>

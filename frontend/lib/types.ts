@@ -4,6 +4,15 @@ export type Portfolio = {
   base_currency: string;
 };
 
+export type Instrument = {
+  id: string;
+  symbol: string;
+  name: string;
+  currency: string;
+  sector: string | null;
+  last_price: number | null;
+};
+
 export type Holding = {
   symbol: string;
   quantity: number;
