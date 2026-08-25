@@ -4,10 +4,11 @@ from datetime import datetime, timezone
 
 from fastapi import FastAPI
 
-from app.routers import orders
+from app.routers import orders, valuation
 
 app = FastAPI(title="Draftfolio API", version="0.1.0")
 app.include_router(orders.router, tags=["orders"])
+app.include_router(valuation.router, tags=["valuation"])
 
 
 @app.get("/health")

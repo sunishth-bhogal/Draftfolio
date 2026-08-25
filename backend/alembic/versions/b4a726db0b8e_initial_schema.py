@@ -1,8 +1,8 @@
 """initial schema
 
-Revision ID: a48760f15ec7
+Revision ID: b4a726db0b8e
 Revises: 
-Create Date: 2026-08-25 16:13:02.332073
+Create Date: 2026-08-25 16:19:40.779307
 """
 from typing import Sequence, Union
 
@@ -10,7 +10,7 @@ from alembic import op
 import sqlalchemy as sa
 import app.models.base
 
-revision: str = 'a48760f15ec7'
+revision: str = 'b4a726db0b8e'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -45,6 +45,21 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('price_bars',
+    sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('instrument_id', sa.Uuid(), nullable=False),
+    sa.Column('bar_date', sa.Date(), nullable=False),
+    sa.Column('close', app.models.base.DecimalType(scale=4), nullable=False),
+    sa.Column('currency', sa.String(length=3), nullable=False),
+    sa.Column('source', sa.String(length=40), nullable=False),
+    sa.Column('as_of', sa.DateTime(timezone=True), nullable=False),
+    sa.ForeignKeyConstraint(['instrument_id'], ['instruments.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('instrument_id', 'bar_date', 'source', name='uq_price_bar')
+    )
+    with op.batch_alter_table('price_bars', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_price_bars_instrument_id'), ['instrument_id'], unique=False)
+
     op.create_table('cash_balances',
     sa.Column('portfolio_id', sa.Uuid(), nullable=False),
     sa.Column('currency', sa.String(length=3), nullable=False),
@@ -71,6 +86,21 @@ def upgrade() -> None:
     )
     with op.batch_alter_table('orders', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_orders_portfolio_id'), ['portfolio_id'], unique=False)
+
+    op.create_table('portfolio_snapshots',
+    sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('portfolio_id', sa.Uuid(), nullable=False),
+    sa.Column('snapshot_date', sa.Date(), nullable=False),
+    sa.Column('cash', app.models.base.DecimalType(scale=4), nullable=False),
+    sa.Column('market_value', app.models.base.DecimalType(scale=4), nullable=False),
+    sa.Column('equity', app.models.base.DecimalType(scale=4), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.ForeignKeyConstraint(['portfolio_id'], ['portfolios.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('portfolio_id', 'snapshot_date', name='uq_snapshot')
+    )
+    with op.batch_alter_table('portfolio_snapshots', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_portfolio_snapshots_portfolio_id'), ['portfolio_id'], unique=False)
 
     op.create_table('positions',
     sa.Column('portfolio_id', sa.Uuid(), nullable=False),
@@ -108,11 +138,19 @@ def downgrade() -> None:
 
     op.drop_table('transactions')
     op.drop_table('positions')
+    with op.batch_alter_table('portfolio_snapshots', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_portfolio_snapshots_portfolio_id'))
+
+    op.drop_table('portfolio_snapshots')
     with op.batch_alter_table('orders', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_orders_portfolio_id'))
 
     op.drop_table('orders')
     op.drop_table('cash_balances')
+    with op.batch_alter_table('price_bars', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_price_bars_instrument_id'))
+
+    op.drop_table('price_bars')
     op.drop_table('portfolios')
     op.drop_table('users')
     op.drop_table('instruments')

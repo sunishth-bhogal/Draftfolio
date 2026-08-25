@@ -12,6 +12,7 @@ import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import (
+    Date,
     DateTime,
     ForeignKey,
     String,
@@ -131,3 +132,51 @@ class CashBalance(Base):
     )
     currency: Mapped[str] = mapped_column(String(3), primary_key=True)
     amount: Mapped[object] = mapped_column(Money4, default=0)
+
+
+class PriceBar(Base):
+    """A daily (adjusted) closing price.
+
+    ``as_of`` records *when this datum became available to us*, which is what
+    prevents look-ahead bias: valuation only ever reads bars whose ``as_of`` is
+    at or before the valuation time, so a backtest can never peek at a price that
+    wasn't known yet. ``source`` lets the UI show data provenance.
+    """
+
+    __tablename__ = "price_bars"
+    __table_args__ = (
+        UniqueConstraint("instrument_id", "bar_date", "source", name="uq_price_bar"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid)
+    instrument_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("instruments.id"), index=True
+    )
+    bar_date: Mapped[object] = mapped_column(Date)
+    close: Mapped[object] = mapped_column(Money4)
+    currency: Mapped[str] = mapped_column(String(3))
+    source: Mapped[str] = mapped_column(String(40), default="seed")
+    as_of: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class PortfolioSnapshot(Base):
+    """Historical calculated state — one row per portfolio per day.
+
+    Equity is stored; returns are *derived* from the series on read, so there is
+    a single source of truth for each day's value.
+    """
+
+    __tablename__ = "portfolio_snapshots"
+    __table_args__ = (
+        UniqueConstraint("portfolio_id", "snapshot_date", name="uq_snapshot"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid)
+    portfolio_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("portfolios.id"), index=True
+    )
+    snapshot_date: Mapped[object] = mapped_column(Date)
+    cash: Mapped[object] = mapped_column(Money4)
+    market_value: Mapped[object] = mapped_column(Money4)
+    equity: Mapped[object] = mapped_column(Money4)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

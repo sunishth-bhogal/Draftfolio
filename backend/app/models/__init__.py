@@ -4,7 +4,9 @@ from .tables import (
     Instrument,
     Order,
     Portfolio,
+    PortfolioSnapshot,
     Position,
+    PriceBar,
     Transaction,
     User,
 )
@@ -18,4 +20,6 @@ __all__ = [
     "Transaction",
     "Position",
     "CashBalance",
+    "PriceBar",
+    "PortfolioSnapshot",
 ]
