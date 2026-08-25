@@ -30,6 +30,7 @@ class Analytics:
     max_drawdown: float | None = None
     # benchmark-relative (None if no/insufficient benchmark data)
     benchmark: str | None = None
+    benchmark_return: float | None = None
     beta: float | None = None
     alpha: float | None = None
     tracking_error: float | None = None
@@ -92,6 +93,7 @@ def portfolio_analytics(
             result.notes.append(f"insufficient benchmark data for {benchmark}")
         else:
             result.benchmark = benchmark
+            result.benchmark_return = metrics.cumulative_return(bench)
             result.beta = metrics.beta(returns, bench)
             result.alpha = metrics.alpha(returns, bench, rf_annual, periods_per_year)
             result.tracking_error = metrics.tracking_error(returns, bench, periods_per_year)
