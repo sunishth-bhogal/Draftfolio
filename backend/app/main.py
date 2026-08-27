@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import settings
 from app.routers import catalog, leaderboard, orders, valuation
 
 app = FastAPI(title="Draftfolio API", version="0.1.0")
@@ -12,7 +13,7 @@ app = FastAPI(title="Draftfolio API", version="0.1.0")
 # Local dev: allow the Next.js frontend to call the API.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=settings.cors_origin_list,
     allow_methods=["*"],
     allow_headers=["*"],
 )

@@ -1,5 +1,7 @@
 # Draftfolio
 
+[![CI](https://github.com/sunishth-bhogal/Draftfolio/actions/workflows/ci.yml/badge.svg)](https://github.com/sunishth-bhogal/Draftfolio/actions/workflows/ci.yml)
+
 Risk-aware fantasy investing — draft a virtual stock/ETF portfolio under a
 salary cap and compete on **risk-adjusted** performance, not raw return.
 
@@ -45,3 +47,7 @@ backend/
 docker-compose.yml   Postgres + Redis
 DESIGN.md            architecture, invariants, ADRs
 ```
+
+## Deploy
+
+API + Postgres on Render (via `render.yaml`), frontend on Vercel. Step-by-step in [DEPLOY.md](DEPLOY.md). CI runs the test suite + a production build on every push.
