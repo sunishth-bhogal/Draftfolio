@@ -180,3 +180,28 @@ class PortfolioSnapshot(Base):
     market_value: Mapped[object] = mapped_column(Money4)
     equity: Mapped[object] = mapped_column(Money4)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class SignalEvent(Base):
+    """A read-only, non-price signal (news, prediction-market odds, social).
+
+    Deliberately NOT on the ledger write path — signals only ever annotate
+    movements after the fact. All sources flatten into this one shape so the
+    explainer doesn't care where a signal came from. ``instrument_id`` is null
+    for market-wide signals. ``value``/``confidence`` are float estimates.
+    """
+
+    __tablename__ = "signal_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid)
+    ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    source: Mapped[str] = mapped_column(String(40))  # news | prediction_market | social
+    instrument_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("instruments.id"), nullable=True, index=True
+    )
+    signal_type: Mapped[str] = mapped_column(String(40))  # sentiment | event_probability | ...
+    value: Mapped[float] = mapped_column()
+    confidence: Mapped[float] = mapped_column()
+    headline: Mapped[str] = mapped_column(String(300))
+    source_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

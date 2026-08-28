@@ -21,8 +21,8 @@ from app.services.prices import ingest_bars
 from app.services.valuation import take_snapshot
 
 TABLES = [
-    "portfolio_snapshots", "transactions", "orders", "price_bars",
-    "positions", "cash_balances", "portfolios", "instruments", "users",
+    "signal_events", "portfolio_snapshots", "transactions", "orders",
+    "price_bars", "positions", "cash_balances", "portfolios", "instruments", "users",
 ]
 
 # 12 business-ish days of closes per symbol.
@@ -92,6 +92,33 @@ def main():
             ingest_bars(db, symbol=sym, bars=[(d, Decimal(str(series[day_i])))], as_of=as_of)
         for pf in portfolios:
             take_snapshot(db, pf.id, "CAD", d, as_of=as_of)
+
+    # Demo signals for the "why did my portfolio move?" explainer. Tied to the
+    # most recent move window (the last two snapshot dates). Correlation only.
+    from sqlalchemy import select as _select
+    from app.models import Instrument as _Inst
+
+    ts = datetime(DATES[-1].year, DATES[-1].month, DATES[-1].day, 14, 0, tzinfo=timezone.utc)
+    inst_by_symbol = {i.symbol: i for i in db.scalars(_select(_Inst))}
+    demo_signals = [
+        ("SHOP", "news", "sentiment", 0.80, 0.75,
+         "Shopify surges after strong holiday-quarter guidance",
+         "https://example.com/shop-earnings"),
+        ("SHOP", "prediction_market", "event_probability", 0.68, 0.55,
+         "Prediction markets: 68% odds of a tech-sector rally this week",
+         "https://example.com/tech-rally-market"),
+        ("AAPL", "news", "sentiment", 0.45, 0.60,
+         "Apple product event well received by analysts",
+         "https://example.com/aapl-event"),
+        ("ENB", "news", "sentiment", 0.05, 0.50,
+         "Enbridge holds steady; dividend reaffirmed",
+         "https://example.com/enb-dividend"),
+    ]
+    for sym, source, stype, value, conf, headline, url in demo_signals:
+        bootstrap.create_signal(
+            db, instrument_id=inst_by_symbol[sym].id, ts=ts, source=source,
+            signal_type=stype, value=value, confidence=conf, headline=headline, source_url=url,
+        )
 
     db.close()
     print(f"Seeded {len(portfolios)} portfolios, {len(META)} instruments, {len(DATES)} days.")

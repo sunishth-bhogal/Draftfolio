@@ -78,3 +78,32 @@ export type Leaderboard = {
 };
 
 export type ScoreMode = "SPRINT" | "BALANCED" | "INVESTOR";
+
+export type Signal = {
+  source: string;
+  signal_type: string;
+  value: number;
+  confidence: number;
+  headline: string;
+  source_url: string | null;
+};
+
+export type Driver = {
+  symbol: string;
+  dollar_pnl: number;
+  contribution: number;
+  price_change: number;
+  signals: Signal[];
+};
+
+export type Explanation = {
+  available: boolean;
+  reason: string | null;
+  as_of_date: string | null;
+  prev_date: string | null;
+  portfolio_return: number | null;
+  prev_equity: number | null;
+  latest_equity: number | null;
+  note: string | null;
+  drivers: Driver[];
+};

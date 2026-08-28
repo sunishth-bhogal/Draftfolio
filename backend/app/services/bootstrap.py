@@ -13,7 +13,16 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import CashBalance, Instrument, Portfolio, Transaction, User
+from datetime import datetime
+
+from app.models import (
+    CashBalance,
+    Instrument,
+    Portfolio,
+    SignalEvent,
+    Transaction,
+    User,
+)
 
 
 def create_user(db: Session, *, email: str, display_name: str) -> User:
@@ -59,3 +68,30 @@ def fund_portfolio(
         )
     )
     db.commit()
+
+
+def create_signal(
+    db: Session,
+    *,
+    instrument_id: uuid.UUID | None,
+    ts: datetime,
+    source: str,
+    signal_type: str,
+    value: float,
+    confidence: float,
+    headline: str,
+    source_url: str | None = None,
+) -> SignalEvent:
+    sig = SignalEvent(
+        instrument_id=instrument_id,
+        ts=ts,
+        source=source,
+        signal_type=signal_type,
+        value=value,
+        confidence=confidence,
+        headline=headline,
+        source_url=source_url,
+    )
+    db.add(sig)
+    db.commit()
+    return sig

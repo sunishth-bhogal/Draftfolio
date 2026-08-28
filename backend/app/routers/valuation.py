@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models import Portfolio
 from app.services import analytics as analytics_service
+from app.services import explain as explain_service
 from app.services import valuation as val_service
 
 router = APIRouter()
@@ -132,6 +133,72 @@ def get_returns(portfolio_id: uuid.UUID, db: Session = Depends(get_db)) -> list[
         )
         for p in val_service.return_series(db, portfolio_id)
     ]
+
+
+class SignalItem(BaseModel):
+    source: str
+    signal_type: str
+    value: float
+    confidence: float
+    headline: str
+    source_url: str | None
+
+
+class DriverItem(BaseModel):
+    symbol: str
+    dollar_pnl: float
+    contribution: float
+    price_change: float
+    signals: list[SignalItem]
+
+
+class ExplainOut(BaseModel):
+    available: bool
+    reason: str | None = None
+    as_of_date: date | None = None
+    prev_date: date | None = None
+    portfolio_return: float | None = None
+    prev_equity: float | None = None
+    latest_equity: float | None = None
+    note: str | None = None
+    drivers: list[DriverItem] = []
+
+
+@router.get("/portfolios/{portfolio_id}/explain", response_model=ExplainOut)
+def explain_move(portfolio_id: uuid.UUID, db: Session = Depends(get_db)) -> ExplainOut:
+    _load(db, portfolio_id)
+    e = explain_service.explain_move(db, portfolio_id)
+    if not e.available:
+        return ExplainOut(available=False, reason=e.reason)
+    return ExplainOut(
+        available=True,
+        as_of_date=e.as_of_date,
+        prev_date=e.prev_date,
+        portfolio_return=e.portfolio_return,
+        prev_equity=float(e.prev_equity) if e.prev_equity is not None else None,
+        latest_equity=float(e.latest_equity) if e.latest_equity is not None else None,
+        note=e.note,
+        drivers=[
+            DriverItem(
+                symbol=d.symbol,
+                dollar_pnl=float(d.dollar_pnl),
+                contribution=d.contribution,
+                price_change=d.price_change,
+                signals=[
+                    SignalItem(
+                        source=s.source,
+                        signal_type=s.signal_type,
+                        value=s.value,
+                        confidence=s.confidence,
+                        headline=s.headline,
+                        source_url=s.source_url,
+                    )
+                    for s in d.signals
+                ],
+            )
+            for d in e.drivers
+        ],
+    )
 
 
 @router.get("/portfolios/{portfolio_id}/analytics", response_model=AnalyticsOut)

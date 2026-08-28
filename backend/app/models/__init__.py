@@ -7,6 +7,7 @@ from .tables import (
     PortfolioSnapshot,
     Position,
     PriceBar,
+    SignalEvent,
     Transaction,
     User,
 )
@@ -22,4 +23,5 @@ __all__ = [
     "CashBalance",
     "PriceBar",
     "PortfolioSnapshot",
+    "SignalEvent",
 ]

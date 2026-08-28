@@ -63,6 +63,27 @@ def latest_close(
     return Decimal(row.close) if row is not None else None
 
 
+def close_asof_date(
+    db: Session, instrument_id: uuid.UUID, on_date: date, now: datetime
+) -> Decimal | None:
+    """Most recent close on or before ``on_date`` that was known by ``now``.
+
+    Bounds both the trading date (no future prices) and the availability time
+    (look-ahead safe), so historical contribution math is honest.
+    """
+    row = db.scalar(
+        select(PriceBar)
+        .where(
+            PriceBar.instrument_id == instrument_id,
+            PriceBar.bar_date <= on_date,
+            PriceBar.as_of <= now,
+        )
+        .order_by(PriceBar.bar_date.desc())
+        .limit(1)
+    )
+    return Decimal(row.close) if row is not None else None
+
+
 def value_portfolio(
     db: Session, portfolio_id: uuid.UUID, base_currency: str, as_of: datetime | None = None
 ) -> Valuation:

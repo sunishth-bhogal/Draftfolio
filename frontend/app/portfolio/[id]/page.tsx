@@ -6,6 +6,7 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import { money, money2, pct, signedPct, num, upDown } from "@/lib/format";
 import { EquityChart } from "@/components/EquityChart";
+import { ExplainCard } from "@/components/ExplainCard";
 import { Card, StatTile, Bar } from "@/components/ui";
 
 export default function PortfolioPage({ params }: { params: Promise<{ id: string }> }) {
@@ -74,6 +75,11 @@ export default function PortfolioPage({ params }: { params: Promise<{ id: string
           value={num(a?.effective_holdings, 1)}
           hint="1 / concentration"
         />
+      </section>
+
+      {/* Why did it move? — the signals explainer */}
+      <section>
+        <ExplainCard portfolioId={id} />
       </section>
 
       {/* Holdings */}

@@ -1,5 +1,6 @@
 import type {
   Analytics,
+  Explanation,
   Instrument,
   Leaderboard,
   Portfolio,
@@ -38,6 +39,7 @@ export const api = {
     get<Analytics>(`/portfolios/${id}/analytics?benchmark=${benchmark}&rf=${rf}`),
   leaderboard: (mode: ScoreMode = "BALANCED", benchmark = "XEQT", rf = 0.04) =>
     get<Leaderboard>(`/leaderboard?mode=${mode}&benchmark=${benchmark}&rf=${rf}`),
+  explain: (id: string) => get<Explanation>(`/portfolios/${id}/explain`),
   instruments: () => get<Instrument[]>("/instruments"),
   createPortfolio: (name: string, starting_cash = 100000) =>
     post<Portfolio>("/portfolios", { name, starting_cash }),

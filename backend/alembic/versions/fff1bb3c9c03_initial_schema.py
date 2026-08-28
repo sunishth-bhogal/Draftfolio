@@ -1,8 +1,8 @@
 """initial schema
 
-Revision ID: b4a726db0b8e
+Revision ID: fff1bb3c9c03
 Revises: 
-Create Date: 2026-08-25 16:19:40.779307
+Create Date: 2026-08-28 01:03:13.826130
 """
 from typing import Sequence, Union
 
@@ -10,7 +10,7 @@ from alembic import op
 import sqlalchemy as sa
 import app.models.base
 
-revision: str = 'b4a726db0b8e'
+revision: str = 'fff1bb3c9c03'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -59,6 +59,24 @@ def upgrade() -> None:
     )
     with op.batch_alter_table('price_bars', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_price_bars_instrument_id'), ['instrument_id'], unique=False)
+
+    op.create_table('signal_events',
+    sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('ts', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('source', sa.String(length=40), nullable=False),
+    sa.Column('instrument_id', sa.Uuid(), nullable=True),
+    sa.Column('signal_type', sa.String(length=40), nullable=False),
+    sa.Column('value', sa.Float(), nullable=False),
+    sa.Column('confidence', sa.Float(), nullable=False),
+    sa.Column('headline', sa.String(length=300), nullable=False),
+    sa.Column('source_url', sa.String(length=500), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.ForeignKeyConstraint(['instrument_id'], ['instruments.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    with op.batch_alter_table('signal_events', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_signal_events_instrument_id'), ['instrument_id'], unique=False)
+        batch_op.create_index(batch_op.f('ix_signal_events_ts'), ['ts'], unique=False)
 
     op.create_table('cash_balances',
     sa.Column('portfolio_id', sa.Uuid(), nullable=False),
@@ -147,6 +165,11 @@ def downgrade() -> None:
 
     op.drop_table('orders')
     op.drop_table('cash_balances')
+    with op.batch_alter_table('signal_events', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_signal_events_ts'))
+        batch_op.drop_index(batch_op.f('ix_signal_events_instrument_id'))
+
+    op.drop_table('signal_events')
     with op.batch_alter_table('price_bars', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_price_bars_instrument_id'))
 
