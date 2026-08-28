@@ -24,3 +24,21 @@ services:
       # Set to your deployed Vercel origin, e.g. https://draftfolio.vercel.app
       - key: CORS_ORIGINS
         sync: false
+
+  # Daily snapshot worker — makes portfolios accrue history/analytics over time.
+  - type: cron
+    name: draftfolio-daily-snapshot
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    # 22:00 UTC on weekdays (after the US market close).
+    schedule: "0 22 * * 1-5"
+    dockerCommand: python -m scripts.snapshot_daily
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: draftfolio-db
+          property: connectionString
+      - key: ENV
+        value: production
