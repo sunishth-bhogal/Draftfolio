@@ -119,3 +119,32 @@ export type PricePoint = {
   close: number;
   formula_version: string | null;
 };
+
+export type Breakdown = {
+  available: boolean;
+  games: number;
+  formula_version: string | null;
+  averages: Record<string, number>;
+  components: Record<string, number>;
+  base_value: number;
+  form_multiplier: number;
+  form_adjustment: number;
+  final_value: number;
+};
+
+export type ValidationRow = {
+  name: string;
+  value: number;
+  ppg: number;
+  production: number;
+  games: number;
+};
+
+export type Validation = {
+  num_players: number;
+  corr_value_production: number | null;
+  corr_value_minutes: number | null;
+  min_games: number;
+  top: ValidationRow[];
+  watchouts: ValidationRow[];
+};

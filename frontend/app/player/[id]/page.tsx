@@ -6,6 +6,7 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import { money2, signedPct, upDown } from "@/lib/format";
 import { PriceChart } from "@/components/PriceChart";
+import { ValueBreakdown } from "@/components/ValueBreakdown";
 import { Card, StatTile } from "@/components/ui";
 
 export default function PlayerPage({ params }: { params: Promise<{ id: string }> }) {
@@ -71,6 +72,8 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
         </div>
         <PriceChart data={points} />
       </Card>
+
+      <ValueBreakdown instrumentId={id} />
 
       <p className="text-xs text-ink-faint">
         A simulated market. Values are a transparent index derived from real box-score

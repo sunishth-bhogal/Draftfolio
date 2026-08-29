@@ -30,6 +30,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Link href="/" className="hover:text-ink transition-colors">
                   Leaderboard
                 </Link>
+                <Link href="/methodology" className="hover:text-ink transition-colors">
+                  Methodology
+                </Link>
               </nav>
             </div>
           </header>

@@ -16,6 +16,7 @@ from datetime import date as _date
 from app.db import get_db
 from app.models import Instrument, PriceBar, Portfolio, User
 from app.services import bootstrap
+from app.services import player_analysis
 from app.services.valuation import latest_close
 
 router = APIRouter()
@@ -119,3 +120,51 @@ def price_history(instrument_id: uuid.UUID, db: Session = Depends(get_db)) -> li
         PricePoint(date=r.bar_date, close=float(r.close), formula_version=r.formula_version)
         for r in rows
     ]
+
+
+class BreakdownOut(BaseModel):
+    available: bool
+    games: int = 0
+    formula_version: str | None = None
+    averages: dict[str, float] = {}
+    components: dict[str, float] = {}
+    base_value: float = 0.0
+    form_multiplier: float = 1.0
+    form_adjustment: float = 0.0
+    final_value: float = 0.0
+
+
+@router.get("/instruments/{instrument_id}/breakdown", response_model=BreakdownOut)
+def value_breakdown(instrument_id: uuid.UUID, db: Session = Depends(get_db)) -> BreakdownOut:
+    b = player_analysis.value_breakdown_for(db, instrument_id)
+    return BreakdownOut(**b.__dict__)
+
+
+class ValidationRowOut(BaseModel):
+    name: str
+    value: float
+    ppg: float
+    production: float
+    games: int
+
+
+class ValidationOut(BaseModel):
+    num_players: int
+    corr_value_production: float | None
+    corr_value_minutes: float | None
+    min_games: int
+    top: list[ValidationRowOut]
+    watchouts: list[ValidationRowOut]
+
+
+@router.get("/methodology/validation", response_model=ValidationOut)
+def methodology_validation(db: Session = Depends(get_db)) -> ValidationOut:
+    v = player_analysis.league_validation(db)
+    return ValidationOut(
+        num_players=v.num_players,
+        corr_value_production=v.corr_value_production,
+        corr_value_minutes=v.corr_value_minutes,
+        min_games=v.min_games,
+        top=[ValidationRowOut(**r.__dict__) for r in v.top],
+        watchouts=[ValidationRowOut(**r.__dict__) for r in v.watchouts],
+    )

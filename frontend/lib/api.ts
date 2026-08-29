@@ -2,9 +2,11 @@ import type {
   Analytics,
   Explanation,
   Instrument,
+  Breakdown,
   Leaderboard,
   Portfolio,
   PricePoint,
+  Validation,
   ReturnPoint,
   ScoreMode,
   Valuation,
@@ -43,6 +45,8 @@ export const api = {
   explain: (id: string) => get<Explanation>(`/portfolios/${id}/explain`),
   instruments: () => get<Instrument[]>("/instruments"),
   history: (id: string) => get<PricePoint[]>(`/instruments/${id}/history`),
+  breakdown: (id: string) => get<Breakdown>(`/instruments/${id}/breakdown`),
+  validation: () => get<Validation>("/methodology/validation"),
   createPortfolio: (name: string, starting_cash = 100000) =>
     post<Portfolio>("/portfolios", { name, starting_cash }),
   placeOrder: (
