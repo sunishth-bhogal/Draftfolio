@@ -4,6 +4,7 @@ import type {
   Instrument,
   Leaderboard,
   Portfolio,
+  PricePoint,
   ReturnPoint,
   ScoreMode,
   Valuation,
@@ -41,6 +42,7 @@ export const api = {
     get<Leaderboard>(`/leaderboard?mode=${mode}&benchmark=${benchmark}&rf=${rf}`),
   explain: (id: string) => get<Explanation>(`/portfolios/${id}/explain`),
   instruments: () => get<Instrument[]>("/instruments"),
+  history: (id: string) => get<PricePoint[]>(`/instruments/${id}/history`),
   createPortfolio: (name: string, starting_cash = 100000) =>
     post<Portfolio>("/portfolios", { name, starting_cash }),
   placeOrder: (

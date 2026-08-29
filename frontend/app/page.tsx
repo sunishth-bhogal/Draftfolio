@@ -29,9 +29,9 @@ export default function Home() {
           Invest like a team. <span className="text-ink-soft">Learn like an analyst.</span>
         </h1>
         <p className="mt-3 text-ink-soft max-w-xl">
-          Draft a portfolio under a virtual cap and compete on{" "}
-          <span className="text-ink font-medium">risk-adjusted</span> performance — not
-          whoever bought the most volatile stock.
+          A simulated market for <span className="text-ink font-medium">performance-linked
+          virtual player assets</span>. Draft under a cap with fake money and compete on
+          risk-adjusted performance — prices respond to real player form, not luck.
         </p>
       </section>
 

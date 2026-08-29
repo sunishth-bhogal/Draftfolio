@@ -113,3 +113,9 @@ export type Explanation = {
   note: string | null;
   drivers: Driver[];
 };
+
+export type PricePoint = {
+  date: string;
+  close: number;
+  formula_version: string | null;
+};

@@ -11,8 +11,10 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from datetime import date as _date
+
 from app.db import get_db
-from app.models import Instrument, Portfolio, User
+from app.models import Instrument, PriceBar, Portfolio, User
 from app.services import bootstrap
 from app.services.valuation import latest_close
 
@@ -98,3 +100,22 @@ def create_portfolio(
         db, portfolio_id=pf.id, amount=body.starting_cash, currency=body.base_currency
     )
     return pf
+
+
+class PricePoint(BaseModel):
+    date: _date
+    close: float
+    formula_version: str | None
+
+
+@router.get("/instruments/{instrument_id}/history", response_model=list[PricePoint])
+def price_history(instrument_id: uuid.UUID, db: Session = Depends(get_db)) -> list[PricePoint]:
+    rows = db.scalars(
+        select(PriceBar)
+        .where(PriceBar.instrument_id == instrument_id)
+        .order_by(PriceBar.bar_date.asc())
+    )
+    return [
+        PricePoint(date=r.bar_date, close=float(r.close), formula_version=r.formula_version)
+        for r in rows
+    ]

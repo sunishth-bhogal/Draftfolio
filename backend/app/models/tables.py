@@ -163,6 +163,8 @@ class PriceBar(Base):
     currency: Mapped[str] = mapped_column(String(3))
     source: Mapped[str] = mapped_column(String(40), default="seed")
     as_of: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    # For computed (player) prices: which valuation formula produced this value.
+    formula_version: Mapped[str | None] = mapped_column(String(20), nullable=True)
 
 
 class PortfolioSnapshot(Base):
@@ -186,6 +188,38 @@ class PortfolioSnapshot(Base):
     market_value: Mapped[object] = mapped_column(Money4)
     equity: Mapped[object] = mapped_column(Money4)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class PlayerGame(Base):
+    """Raw per-game observation for a player — the immutable source data.
+
+    Kept SEPARATE from computed prices (PriceBar) so valuations are reproducible
+    and auditable: re-run any formula version over these rows to regenerate the
+    price history. ``as_of`` marks when the box score became available.
+    """
+
+    __tablename__ = "player_games"
+    __table_args__ = (
+        UniqueConstraint("instrument_id", "espn_event_id", name="uq_player_game"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid)
+    instrument_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("instruments.id"), index=True
+    )
+    espn_event_id: Mapped[str] = mapped_column(String(20))
+    game_date: Mapped[object] = mapped_column(Date, index=True)
+    opponent: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    home: Mapped[bool] = mapped_column(default=True)
+    minutes: Mapped[float] = mapped_column(default=0.0)
+    points: Mapped[float] = mapped_column(default=0.0)
+    rebounds: Mapped[float] = mapped_column(default=0.0)
+    assists: Mapped[float] = mapped_column(default=0.0)
+    steals: Mapped[float] = mapped_column(default=0.0)
+    blocks: Mapped[float] = mapped_column(default=0.0)
+    turnovers: Mapped[float] = mapped_column(default=0.0)
+    source: Mapped[str] = mapped_column(String(40), default="nba_espn")
+    as_of: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 
 class SignalEvent(Base):

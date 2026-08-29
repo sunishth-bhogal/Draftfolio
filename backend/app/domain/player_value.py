@@ -18,6 +18,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+# Version the formula: every stored price records the version used to compute it,
+# so historical prices remain reproducible even as the model evolves (v2, v3...).
+FORMULA_VERSION = "v1"
+
 # Per-game production weights (a value-over-replacement style box score).
 W_PTS = 1.0
 W_REB = 1.2
@@ -82,3 +86,19 @@ def form_multiplier(recent_score: float, season_score: float) -> float:
         return 1.0
     ratio = recent_score / season_score
     return max(0.8, min(1.25, ratio))
+
+
+def value_breakdown(stats: PlayerStats) -> dict[str, float]:
+    """Per-component dollar contribution to the base value.
+
+    Answers "why is this player worth $X" — the value is the sum of these plus
+    the form/availability adjustments. Turnovers contribute negatively.
+    """
+    return {
+        "points": round(W_PTS * stats.points * VALUE_SCALE, 2),
+        "rebounds": round(W_REB * stats.rebounds * VALUE_SCALE, 2),
+        "assists": round(W_AST * stats.assists * VALUE_SCALE, 2),
+        "steals": round(W_STL * stats.steals * VALUE_SCALE, 2),
+        "blocks": round(W_BLK * stats.blocks * VALUE_SCALE, 2),
+        "turnovers": round(W_TOV * stats.turnovers * VALUE_SCALE, 2),
+    }

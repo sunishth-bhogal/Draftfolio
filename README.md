@@ -2,13 +2,17 @@
 
 [![CI](https://github.com/sunishth-bhogal/Draftfolio/actions/workflows/ci.yml/badge.svg)](https://github.com/sunishth-bhogal/Draftfolio/actions/workflows/ci.yml)
 
-Risk-aware fantasy investing — draft a virtual stock/ETF portfolio under a
-salary cap and compete on **risk-adjusted** performance, not raw return.
+Draftfolio is a **simulated sports market** where users trade **performance-linked
+virtual NBA player assets** whose prices respond to real player performance, form,
+availability, and injuries. It combines a transparent valuation model, historical
+analytics, portfolio tracking, and explainable daily price movements — traded with
+fake money, not real securities, ownership, or wagers.
 
-The technical heart is a virtual brokerage **ledger you cannot lose or invent
-money in**: an append-only transaction log, idempotent orders, `Decimal` money,
-and financial invariants verified with property-based tests. See
-[DESIGN.md](DESIGN.md).
+Under the hood it's a virtual brokerage **ledger you cannot lose or invent money
+in**: an append-only transaction log, idempotent orders, `Decimal` money, and
+financial invariants verified with property-based tests. Player prices are
+reconstructed point-in-time from real box scores and stamped with the valuation
+formula version, so the history is reproducible and auditable. See [DESIGN.md](DESIGN.md).
 
 ## Status
 

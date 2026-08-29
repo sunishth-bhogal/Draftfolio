@@ -1,8 +1,8 @@
 """initial schema
 
-Revision ID: 1be66ab26260
+Revision ID: 9e0704ef1c3c
 Revises: 
-Create Date: 2026-08-29 01:15:17.059881
+Create Date: 2026-08-29 01:27:34.204149
 """
 from typing import Sequence, Union
 
@@ -10,7 +10,7 @@ from alembic import op
 import sqlalchemy as sa
 import app.models.base
 
-revision: str = '1be66ab26260'
+revision: str = '9e0704ef1c3c'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -41,6 +41,30 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
+    op.create_table('player_games',
+    sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('instrument_id', sa.Uuid(), nullable=False),
+    sa.Column('espn_event_id', sa.String(length=20), nullable=False),
+    sa.Column('game_date', sa.Date(), nullable=False),
+    sa.Column('opponent', sa.String(length=60), nullable=True),
+    sa.Column('home', sa.Boolean(), nullable=False),
+    sa.Column('minutes', sa.Float(), nullable=False),
+    sa.Column('points', sa.Float(), nullable=False),
+    sa.Column('rebounds', sa.Float(), nullable=False),
+    sa.Column('assists', sa.Float(), nullable=False),
+    sa.Column('steals', sa.Float(), nullable=False),
+    sa.Column('blocks', sa.Float(), nullable=False),
+    sa.Column('turnovers', sa.Float(), nullable=False),
+    sa.Column('source', sa.String(length=40), nullable=False),
+    sa.Column('as_of', sa.DateTime(timezone=True), nullable=False),
+    sa.ForeignKeyConstraint(['instrument_id'], ['instruments.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('instrument_id', 'espn_event_id', name='uq_player_game')
+    )
+    with op.batch_alter_table('player_games', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_player_games_game_date'), ['game_date'], unique=False)
+        batch_op.create_index(batch_op.f('ix_player_games_instrument_id'), ['instrument_id'], unique=False)
+
     op.create_table('portfolios',
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('user_id', sa.Uuid(), nullable=False),
@@ -58,6 +82,7 @@ def upgrade() -> None:
     sa.Column('currency', sa.String(length=3), nullable=False),
     sa.Column('source', sa.String(length=40), nullable=False),
     sa.Column('as_of', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('formula_version', sa.String(length=20), nullable=True),
     sa.ForeignKeyConstraint(['instrument_id'], ['instruments.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('instrument_id', 'bar_date', 'source', name='uq_price_bar')
@@ -180,6 +205,11 @@ def downgrade() -> None:
 
     op.drop_table('price_bars')
     op.drop_table('portfolios')
+    with op.batch_alter_table('player_games', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_player_games_instrument_id'))
+        batch_op.drop_index(batch_op.f('ix_player_games_game_date'))
+
+    op.drop_table('player_games')
     op.drop_table('users')
     op.drop_table('instruments')
     # ### end Alembic commands ###

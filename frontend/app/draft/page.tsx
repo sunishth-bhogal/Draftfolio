@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { api } from "@/lib/api";
 import { money, money2, pct } from "@/lib/format";
 import { Card, Bar } from "@/components/ui";
@@ -65,7 +66,8 @@ export default function DraftPage() {
         <h1 className="text-4xl font-semibold tracking-tight">Draft room</h1>
         <p className="mt-2 text-ink-soft max-w-xl">
           You have <span className="text-ink font-medium num">{money(CAP)}</span> in virtual
-          cash. Draft your assets under the cap — you compete on risk-adjusted performance.
+          cash. Draft <b>performance-linked virtual player assets</b> under the cap and compete on
+          risk-adjusted performance. Simulated market · fake money.
         </p>
       </section>
 
@@ -93,7 +95,9 @@ export default function DraftPage() {
                   />
                 )}
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold truncate">{inst.name}</div>
+                  <Link href={`/player/${inst.id}`} className="font-semibold truncate hover:text-accent-deep block">
+                    {inst.name}
+                  </Link>
                   <div className="text-xs text-ink-faint">
                     {inst.asset_class === "PLAYER"
                       ? `${inst.position ?? "?"} · ${inst.team ?? ""}`

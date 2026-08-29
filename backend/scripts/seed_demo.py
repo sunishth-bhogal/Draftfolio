@@ -21,7 +21,7 @@ from app.services.prices import ingest_bars
 from app.services.valuation import take_snapshot
 
 TABLES = [
-    "signal_events", "portfolio_snapshots", "transactions", "orders",
+    "player_games", "signal_events", "portfolio_snapshots", "transactions", "orders",
     "price_bars", "positions", "cash_balances", "portfolios", "instruments", "users",
 ]
 
