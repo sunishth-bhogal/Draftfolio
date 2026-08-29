@@ -20,6 +20,7 @@ router = APIRouter()
 
 class HoldingOut(BaseModel):
     symbol: str
+    name: str
     quantity: float
     price: float
     market_value: float
@@ -89,6 +90,7 @@ def get_valuation(portfolio_id: uuid.UUID, db: Session = Depends(get_db)) -> Val
         holdings=[
             HoldingOut(
                 symbol=h.symbol,
+                name=h.name,
                 quantity=float(h.quantity),
                 price=float(h.price),
                 market_value=float(h.market_value),

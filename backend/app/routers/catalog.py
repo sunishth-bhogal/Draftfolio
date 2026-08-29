@@ -36,6 +36,11 @@ class InstrumentOut(BaseModel):
     currency: str
     sector: str | None
     last_price: float | None
+    asset_class: str
+    sport: str | None
+    team: str | None
+    position: str | None
+    headshot_url: str | None
 
 
 class CreatePortfolioRequest(BaseModel):
@@ -63,6 +68,11 @@ def list_instruments(db: Session = Depends(get_db)) -> list[InstrumentOut]:
                 currency=inst.currency,
                 sector=inst.sector,
                 last_price=float(price) if price is not None else None,
+                asset_class=inst.asset_class,
+                sport=inst.sport,
+                team=inst.team,
+                position=inst.position,
+                headshot_url=inst.headshot_url,
             )
         )
     return out

@@ -103,7 +103,7 @@ export default function PortfolioPage({ params }: { params: Promise<{ id: string
               <tbody>
                 {v.holdings.map((h) => (
                   <tr key={h.symbol} className="border-b border-line last:border-0">
-                    <td className="py-3 font-medium">{h.symbol}</td>
+                    <td className="py-3 font-medium">{h.name}</td>
                     <td className="py-3 text-right num text-ink-soft">{num(h.quantity, 0)}</td>
                     <td className="py-3 text-right num text-ink-soft">{money2(h.price)}</td>
                     <td className="py-3 text-right num">{money(h.market_value)}</td>

@@ -45,11 +45,17 @@ class Instrument(Base):
     __tablename__ = "instruments"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid)
-    symbol: Mapped[str] = mapped_column(String(20), unique=True)
+    symbol: Mapped[str] = mapped_column(String(40), unique=True)
     name: Mapped[str] = mapped_column(String(200))
     currency: Mapped[str] = mapped_column(String(3))
-    asset_class: Mapped[str] = mapped_column(String(20), default="EQUITY")
+    asset_class: Mapped[str] = mapped_column(String(20), default="EQUITY")  # EQUITY | ETF | PLAYER
     sector: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    # Player fields (null for stocks/ETFs).
+    sport: Mapped[str | None] = mapped_column(String(10), nullable=True)  # NBA | NHL
+    team: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    position: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    external_ref: Mapped[str | None] = mapped_column(String(40), nullable=True)  # ESPN athlete id
+    headshot_url: Mapped[str | None] = mapped_column(String(300), nullable=True)
 
 
 class Portfolio(Base):

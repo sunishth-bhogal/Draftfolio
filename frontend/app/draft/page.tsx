@@ -84,13 +84,21 @@ export default function DraftPage() {
                 key={inst.id}
                 className="rounded-xl border border-line bg-card px-4 py-3 flex items-center gap-4"
               >
+                {inst.headshot_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={inst.headshot_url}
+                    alt={inst.name}
+                    className="h-11 w-11 rounded-full bg-cream object-cover border border-line"
+                  />
+                )}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-semibold">{inst.symbol}</span>
-                    <span className="text-xs text-ink-faint truncate">{inst.name}</span>
-                  </div>
+                  <div className="font-semibold truncate">{inst.name}</div>
                   <div className="text-xs text-ink-faint">
-                    {inst.sector ?? "—"} · <span className="num">{money2(inst.last_price ?? 0)}</span>
+                    {inst.asset_class === "PLAYER"
+                      ? `${inst.position ?? "?"} · ${inst.team ?? ""}`
+                      : (inst.sector ?? inst.symbol)}{" "}
+                    · <span className="num">{money2(inst.last_price ?? 0)}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

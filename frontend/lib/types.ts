@@ -11,10 +11,16 @@ export type Instrument = {
   currency: string;
   sector: string | null;
   last_price: number | null;
+  asset_class: string;
+  sport: string | null;
+  team: string | null;
+  position: string | null;
+  headshot_url: string | null;
 };
 
 export type Holding = {
   symbol: string;
+  name: string;
   quantity: number;
   price: number;
   market_value: number;
