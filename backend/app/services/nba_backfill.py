@@ -131,5 +131,10 @@ def backfill_player(db: Session, instrument: Instrument, games: list[GameObs]) -
         _write_price(db, instrument, games[i].game_date, value)
         bars += 1
 
+    # Emit a catalyst signal for the latest game (feeds the portfolio explainer).
+    from app.services.catalysts import write_catalyst_signal
+
+    write_catalyst_signal(db, instrument)
+
     db.commit()
     return bars

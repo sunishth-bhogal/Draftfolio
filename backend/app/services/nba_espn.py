@@ -35,6 +35,7 @@ class PlayerMeta:
     position: str | None
     headshot_url: str | None
     injured: bool
+    injury_status: str | None = None  # e.g. "Out", "Day-To-Day"
 
 
 @dataclass
@@ -86,10 +87,8 @@ def get_roster(team_id: int) -> list[PlayerMeta]:
         pos = (a.get("position") or {}).get("abbreviation")
         headshot = (a.get("headshot") or {}).get("href")
         injuries = a.get("injuries") or []
-        injured = any(
-            (inj.get("status") or "").lower() in {"out", "injured", "doubtful"}
-            for inj in injuries
-        )
+        status = (injuries[0].get("status") if injuries else None) or None
+        injured = (status or "").lower() in {"out", "injured", "doubtful", "day-to-day"}
         out.append(
             PlayerMeta(
                 espn_id=str(a["id"]),
@@ -98,6 +97,7 @@ def get_roster(team_id: int) -> list[PlayerMeta]:
                 position=pos,
                 headshot_url=headshot,
                 injured=injured,
+                injury_status=status,
             )
         )
     return out

@@ -3,6 +3,7 @@ import type {
   Explanation,
   Instrument,
   Breakdown,
+  Catalysts,
   Leaderboard,
   Portfolio,
   PricePoint,
@@ -46,6 +47,7 @@ export const api = {
   instruments: () => get<Instrument[]>("/instruments"),
   history: (id: string) => get<PricePoint[]>(`/instruments/${id}/history`),
   breakdown: (id: string) => get<Breakdown>(`/instruments/${id}/breakdown`),
+  catalysts: (id: string) => get<Catalysts>(`/instruments/${id}/catalysts`),
   validation: () => get<Validation>("/methodology/validation"),
   createPortfolio: (name: string, starting_cash = 100000) =>
     post<Portfolio>("/portfolios", { name, starting_cash }),

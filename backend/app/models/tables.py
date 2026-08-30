@@ -60,6 +60,7 @@ class Instrument(Base):
     # position-based league prior for rookies. Separate from current-season data.
     prior_value: Mapped[float | None] = mapped_column(nullable=True)
     prior_basis: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    injury_status: Mapped[str | None] = mapped_column(String(40), nullable=True)
 
 
 class Portfolio(Base):

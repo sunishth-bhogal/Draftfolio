@@ -16,6 +16,7 @@ from datetime import date as _date
 from app.db import get_db
 from app.models import Instrument, PriceBar, Portfolio, User
 from app.services import bootstrap
+from app.services import catalysts as catalyst_svc
 from app.services import player_analysis
 from app.services.valuation import latest_close
 
@@ -191,4 +192,31 @@ def methodology_validation(db: Session = Depends(get_db)) -> ValidationOut:
         top=[ValidationRowOut(**r.__dict__) for r in v.top],
         watchouts=[ValidationRowOut(**r.__dict__) for r in v.watchouts],
         by_position=[PositionRowOut(**r.__dict__) for r in v.by_position],
+    )
+
+
+class CatalystItemOut(BaseModel):
+    kind: str
+    direction: str
+    label: str
+    detail: str
+
+
+class CatalystsOut(BaseModel):
+    available: bool
+    as_of: _date | None = None
+    price_change: float | None = None
+    summary: str = ""
+    items: list[CatalystItemOut] = []
+
+
+@router.get("/instruments/{instrument_id}/catalysts", response_model=CatalystsOut)
+def instrument_catalysts(instrument_id: uuid.UUID, db: Session = Depends(get_db)) -> CatalystsOut:
+    c = catalyst_svc.player_catalysts(db, instrument_id)
+    return CatalystsOut(
+        available=c.available,
+        as_of=c.as_of,
+        price_change=c.price_change,
+        summary=c.summary,
+        items=[CatalystItemOut(**i.__dict__) for i in c.items],
     )

@@ -166,3 +166,18 @@ export type Validation = {
   watchouts: ValidationRow[];
   by_position: PositionRow[];
 };
+
+export type CatalystItem = {
+  kind: string;
+  direction: string;
+  label: string;
+  detail: string;
+};
+
+export type Catalysts = {
+  available: boolean;
+  as_of: string | null;
+  price_change: number | null;
+  summary: string;
+  items: CatalystItem[];
+};

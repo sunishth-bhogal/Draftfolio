@@ -15,14 +15,12 @@ from __future__ import annotations
 import os
 import time
 from collections import defaultdict
-from datetime import date, datetime, timezone
-from decimal import Decimal
 
 from sqlalchemy import select
 
 from app.db import SessionLocal
 from app.domain.player_value import FORMULA_VERSION, shrink, value_index
-from app.models import Instrument, PriceBar
+from app.models import Instrument
 from app.services import nba_espn
 
 CURRENCY = "CAD"  # virtual sim currency
@@ -41,25 +39,10 @@ def _upsert_instrument(db, meta: nba_espn.PlayerMeta) -> Instrument:
     inst.sector = meta.position
     inst.external_ref = meta.espn_id
     inst.headshot_url = meta.headshot_url
+    inst.injury_status = meta.injury_status
     db.flush()
     return inst
 
-
-def _write_price(db, inst: Instrument, value: float) -> None:
-    today = date.today()
-    bar = db.scalar(
-        select(PriceBar).where(
-            PriceBar.instrument_id == inst.id,
-            PriceBar.bar_date == today,
-            PriceBar.source == "nba_espn",
-        )
-    )
-    if bar is None:
-        bar = PriceBar(instrument_id=inst.id, bar_date=today, currency=CURRENCY, source="nba_espn")
-        db.add(bar)
-    bar.close = Decimal(str(value))
-    bar.formula_version = FORMULA_VERSION
-    bar.as_of = datetime.now(timezone.utc)
 
 
 def main() -> None:
@@ -102,17 +85,18 @@ def main() -> None:
             pos_vals[pos].append(inst.prior_value)
     pos_prior = {p: round(sum(v) / len(v), 2) for p, v in pos_vals.items()}
 
-    # Pass 2: fill rookie priors and write v2 shrunk current prices.
+    # Pass 2: fill rookie priors. Prices come solely from the game-log backfill
+    # (a single game-dated series), so current value / daily change / catalysts
+    # all reconcile — no separate "today" mark to drift out of sync.
     for inst, observed, games, pos in info:
         if inst.prior_value is None:
             inst.prior_value = pos_prior.get(pos, league_prior)
             inst.prior_basis = f"POS:{pos or 'NBA'} prior"
         adjusted = shrink(observed, inst.prior_value, games)
-        _write_price(db, inst, adjusted)
         print(f"  {inst.name:24} {inst.position or '?':3} obs=${observed} prior=${inst.prior_value} g={games} -> ${adjusted}")
     db.commit()
     db.close()
-    print(f"Seeded {len(info)} NBA players (model {FORMULA_VERSION}).")
+    print(f"Seeded {len(info)} NBA players (model {FORMULA_VERSION}). Run backfill_nba for prices.")
 
 
 if __name__ == "__main__":
