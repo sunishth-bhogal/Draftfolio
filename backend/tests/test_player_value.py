@@ -51,3 +51,22 @@ def test_turnovers_reduce_production():
     base = PlayerStats(70, 36, 30, 8, 8, 1.5, 1.0, 0.0)
     turnover_heavy = PlayerStats(70, 36, 30, 8, 8, 1.5, 1.0, 6.0)
     assert production_score(turnover_heavy) < production_score(base)
+
+
+def test_reliability_and_shrinkage_math():
+    from app.domain.player_value import reliability, shrink
+
+    # Matches the spec example: 1-game $670 obs, $180 prior, K=12 -> ~$218.
+    assert round(reliability(1, 12), 3) == round(1 / 13, 3)
+    assert abs(shrink(670, 180, 1, 12) - 217.69) < 0.5
+
+    # Full season -> mostly observed; returning star (thin sample, high prior)
+    # is pulled toward the prior, NOT toward zero.
+    assert shrink(670, 180, 60, 12) > 550
+    assert shrink(200, 400, 2, 12) > 350  # not worthless
+
+
+def test_shrink_with_equal_prior_is_identity():
+    from app.domain.player_value import shrink
+
+    assert shrink(300, 300, 5, 12) == 300.0

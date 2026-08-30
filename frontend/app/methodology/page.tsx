@@ -29,14 +29,14 @@ export default function MethodologyPage() {
       </section>
 
       <Card>
-        <h2 className="font-semibold mb-3">The formula (model v1)</h2>
+        <h2 className="font-semibold mb-3">The formula (model v2)</h2>
         <p className="text-sm text-ink-soft">
-          Per-game production, weighted, then scaled to dollars and adjusted for form and
-          availability:
+          Per-game production, weighted and scaled to dollars, then <b>shrunk toward a quality
+          prior</b> based on how many games we&apos;ve actually seen:
         </p>
         <pre className="num text-xs bg-cream border border-line rounded-lg p-3 mt-3 overflow-x-auto">
-value = ( 1.0·PTS + 1.2·REB + 1.5·AST + 3·STL + 3·BLK − 1·TOV )
-        × $12  × form(last 5 vs season)  × availability
+observed = ( 1.0·PTS + 1.2·REB + 1.5·AST + 3·STL + 3·BLK − 1·TOV ) × $12 × form
+value    = (G/(G+K))·observed + (K/(G+K))·prior        (K = 12 games)
         </pre>
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-4">
           {WEIGHTS.map(([label, w]) => (
@@ -46,63 +46,100 @@ value = ( 1.0·PTS + 1.2·REB + 1.5·AST + 3·STL + 3·BLK − 1·TOV )
             </div>
           ))}
         </div>
+        <p className="text-sm text-ink-soft mt-4">
+          The shrinkage separates <b>current-season confidence</b> (how many games) from{" "}
+          <b>underlying ability</b> (the prior). A returning star with two games isn&apos;t marked
+          down to nothing — their price leans on last season until the sample grows. Prior =
+          previous-season value for veterans, a position-based league prior for rookies.
+        </p>
       </Card>
 
       <section>
         <h2 className="font-semibold mb-3">Does the model make sense? (validation)</h2>
         {data && (
           <>
+            <Card className="mb-4">
+              <h3 className="font-medium mb-1">Walk-forward predictive test</h3>
+              <p className="text-xs text-ink-faint mb-3">
+                The real test, with no leakage: value from a player&apos;s first-half games vs
+                their production over the second half ({data.predictive_n} players).
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <StatTile label="Predictive (Pearson)" value={num(data.predictive_pearson, 2)} />
+                <StatTile label="Predictive (Spearman)" value={num(data.predictive_spearman, 2)} />
+              </div>
+              <p className="text-xs text-ink-faint mt-2">
+                Past value genuinely predicts future production — the price carries signal, not
+                just a restatement of the same games.
+              </p>
+            </Card>
+
             <div className="grid sm:grid-cols-2 gap-3 mb-4">
               <StatTile
                 label="Value vs production"
-                value={num(data.corr_value_production, 2)}
-                hint="= 1.00 by construction — a pipeline sanity check"
+                value={`${num(data.pearson_value_production, 2)} / ${num(data.spearman_value_production, 2)}`}
+                hint="Pearson / Spearman — = 1.00 by construction, a pipeline sanity check"
               />
               <StatTile
-                label="Value vs minutes played"
-                value={num(data.corr_value_minutes, 2)}
-                hint="minutes isn't an input — value tracking coach-assigned role is real signal"
+                label="Value vs minutes"
+                value={`${num(data.pearson_value_minutes, 2)} / ${num(data.spearman_value_minutes, 2)}`}
+                hint="not fully independent — counting stats rise with minutes"
               />
             </div>
 
             <Card className="mb-4">
-              <h3 className="font-medium mb-3">
-                Top by value (≥ {data.min_games} games) — face validity
-              </h3>
+              <h3 className="font-medium mb-3">Average value by position — the center bias</h3>
               <table className="w-full text-sm">
                 <tbody>
-                  {data.top.map((r, i) => (
-                    <tr key={r.name} className="border-b border-line last:border-0">
-                      <td className="py-2 text-ink-faint num w-6">{i + 1}</td>
-                      <td className="py-2 font-medium">{r.name}</td>
-                      <td className="py-2 text-right num text-ink-soft">{r.ppg} ppg</td>
-                      <td className="py-2 text-right num">{money2(r.value)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <p className="text-xs text-ink-faint mt-2">Recognizable stars — the model ranks sensibly.</p>
-            </Card>
-
-            <Card>
-              <h3 className="font-medium mb-3">Where the model breaks — small-sample watch-outs</h3>
-              <table className="w-full text-sm">
-                <tbody>
-                  {data.watchouts.map((r) => (
-                    <tr key={r.name} className="border-b border-line last:border-0">
-                      <td className="py-2 font-medium">{r.name}</td>
-                      <td className="py-2 text-right num text-ink-soft">{r.ppg} ppg</td>
-                      <td className="py-2 text-right num text-down">{r.games} g</td>
-                      <td className="py-2 text-right num">{money2(r.value)}</td>
+                  {data.by_position.map((r) => (
+                    <tr key={r.position} className="border-b border-line last:border-0">
+                      <td className="py-2 font-medium w-16">{r.position}</td>
+                      <td className="py-2 text-ink-soft num">{r.n} players</td>
+                      <td className="py-2 text-right num">avg {money2(r.avg_value)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
               <p className="text-xs text-ink-faint mt-2">
-                A few big games (or an injured star&apos;s handful of appearances) distort the
-                average. Fix in v2: shrink value toward a prior until enough games are logged.
+                Centers value highest — the rebound/block weights reward bigs. Real, and worth
+                flagging; a fitted model or an external impact metric (BPM/Win Shares) would
+                correct it.
               </p>
             </Card>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Card>
+                <h3 className="font-medium mb-3">Top by value (≥ {data.min_games} games)</h3>
+                <table className="w-full text-sm">
+                  <tbody>
+                    {data.top.slice(0, 6).map((r, i) => (
+                      <tr key={r.name} className="border-b border-line last:border-0">
+                        <td className="py-1.5 text-ink-faint num w-6">{i + 1}</td>
+                        <td className="py-1.5 font-medium">{r.name}</td>
+                        <td className="py-1.5 text-right num">{money2(r.value)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Card>
+              <Card>
+                <h3 className="font-medium mb-3">Small-sample watch-outs</h3>
+                <table className="w-full text-sm">
+                  <tbody>
+                    {data.watchouts.map((r) => (
+                      <tr key={r.name} className="border-b border-line last:border-0">
+                        <td className="py-1.5 font-medium">{r.name}</td>
+                        <td className="py-1.5 text-right num text-down">{r.games} g</td>
+                        <td className="py-1.5 text-right num">{money2(r.value)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className="text-xs text-ink-faint mt-2">
+                  Now shrunk toward each player&apos;s prior — flagged, not trusted at face value.
+                </p>
+              </Card>
+            </div>
           </>
         )}
       </section>
@@ -111,17 +148,16 @@ value = ( 1.0·PTS + 1.2·REB + 1.5·AST + 3·STL + 3·BLK − 1·TOV )
         <h2 className="font-semibold mb-2">Honest limitations</h2>
         <ul className="text-sm text-ink-soft space-y-1.5 list-disc pl-5">
           <li>
-            <b>Model-priced, not market-priced.</b> No order book or supply/demand — two users
-            wanting the same player doesn&apos;t move the price.
+            <b>Model-priced, not market-priced.</b> No order book or supply/demand yet.
           </li>
           <li>
             <b>Weights are a heuristic</b>, not fit by regression to an outcome.
           </li>
           <li>
-            <b>Box scores miss</b> defense beyond steals/blocks, spacing, and on/off impact.
+            <b>Position bias</b> (above): box scores over-reward rebounding bigs.
           </li>
           <li>
-            <b>Small samples distort</b> value (see watch-outs above) until enough games accrue.
+            <b>No external impact metric yet</b> (BPM/Win Shares) — the next validation step.
           </li>
         </ul>
       </Card>

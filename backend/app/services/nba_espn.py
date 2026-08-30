@@ -107,20 +107,21 @@ def _label_index(labels: list[str]) -> dict[str, int]:
     return {label: i for i, label in enumerate(labels)}
 
 
-def get_season_averages(espn_id: str) -> PlayerStats | None:
-    """Most recent season's per-game averages, or None if unavailable."""
+def get_season_history(espn_id: str) -> list[tuple[str, PlayerStats]]:
+    """All seasons' per-game averages, most recent first: [(displayName, stats)].
+
+    Powers both current-season stats and the previous-season prior used by v2.
+    """
     try:
         data = _get(f"{WEB}/athletes/{espn_id}/stats")
     except Exception:  # noqa: BLE001
-        return None
+        return []
 
     avg_cat = next((c for c in data.get("categories", []) if c.get("name") == "averages"), None)
     if not avg_cat or not avg_cat.get("statistics"):
-        return None
+        return []
 
     idx = _label_index(avg_cat.get("labels", []))
-    # Pick the most recent season row that has games played.
-    rows = avg_cat["statistics"]
 
     def season_year(row: dict) -> int:
         disp = (row.get("season") or {}).get("displayName", "0")
@@ -128,8 +129,6 @@ def get_season_averages(espn_id: str) -> PlayerStats | None:
             return int(str(disp).split("-")[0])
         except ValueError:
             return 0
-
-    rows = sorted(rows, key=season_year, reverse=True)
 
     def f(stats: list[str], key: str) -> float:
         i = idx.get(key)
@@ -140,22 +139,35 @@ def get_season_averages(espn_id: str) -> PlayerStats | None:
         except ValueError:
             return 0.0
 
-    for row in rows:
+    out: list[tuple[str, PlayerStats]] = []
+    for row in sorted(avg_cat["statistics"], key=season_year, reverse=True):
         stats = row.get("stats") or []
         gp = f(stats, "GP")
         if gp <= 0:
             continue
-        return PlayerStats(
-            games=int(gp),
-            minutes=f(stats, "MIN"),
-            points=f(stats, "PTS"),
-            rebounds=f(stats, "REB"),
-            assists=f(stats, "AST"),
-            steals=f(stats, "STL"),
-            blocks=f(stats, "BLK"),
-            turnovers=f(stats, "TO"),
+        disp = (row.get("season") or {}).get("displayName", "")
+        out.append(
+            (
+                disp,
+                PlayerStats(
+                    games=int(gp),
+                    minutes=f(stats, "MIN"),
+                    points=f(stats, "PTS"),
+                    rebounds=f(stats, "REB"),
+                    assists=f(stats, "AST"),
+                    steals=f(stats, "STL"),
+                    blocks=f(stats, "BLK"),
+                    turnovers=f(stats, "TO"),
+                ),
+            )
         )
-    return None
+    return out
+
+
+def get_season_averages(espn_id: str) -> PlayerStats | None:
+    """Most recent season's per-game averages, or None if unavailable."""
+    hist = get_season_history(espn_id)
+    return hist[0][1] if hist else None
 
 
 # gamelog stat column order (from the endpoint's "names" array)

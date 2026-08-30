@@ -23,6 +23,7 @@ from app.domain.player_value import (
     PlayerStats,
     form_multiplier,
     production_score,
+    shrink,
     value_index,
 )
 from app.models import Instrument, PlayerGame, PriceBar
@@ -111,6 +112,10 @@ def backfill_player(db: Session, instrument: Instrument, games: list[GameObs]) -
     ]
     _store_games(db, instrument, games)
 
+    # v2 prior (player quality). Falls back to the first observed value if a
+    # player somehow has no stored prior, so shrinkage still runs.
+    prior = float(instrument.prior_value) if instrument.prior_value is not None else None
+
     bars = 0
     for i in range(len(games)):
         season_to_date = games[: i + 1]
@@ -119,7 +124,10 @@ def backfill_player(db: Session, instrument: Instrument, games: list[GameObs]) -
         form = form_multiplier(
             production_score(_mean_stats(recent)), production_score(season_stats)
         )
-        value = value_index(season_stats, form_multiplier=form)
+        observed = value_index(season_stats, form_multiplier=form)
+        p = prior if prior is not None else observed
+        # G = games observed so far -> early season leans on the prior.
+        value = shrink(observed, p, games=i + 1)
         _write_price(db, instrument, games[i].game_date, value)
         bars += 1
 

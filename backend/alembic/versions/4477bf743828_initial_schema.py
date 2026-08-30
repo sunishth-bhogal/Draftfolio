@@ -1,8 +1,8 @@
 """initial schema
 
-Revision ID: 9e0704ef1c3c
+Revision ID: 4477bf743828
 Revises: 
-Create Date: 2026-08-29 01:27:34.204149
+Create Date: 2026-08-30 01:41:08.238620
 """
 from typing import Sequence, Union
 
@@ -10,7 +10,7 @@ from alembic import op
 import sqlalchemy as sa
 import app.models.base
 
-revision: str = '9e0704ef1c3c'
+revision: str = '4477bf743828'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -30,6 +30,8 @@ def upgrade() -> None:
     sa.Column('position', sa.String(length=20), nullable=True),
     sa.Column('external_ref', sa.String(length=40), nullable=True),
     sa.Column('headshot_url', sa.String(length=300), nullable=True),
+    sa.Column('prior_value', sa.Float(), nullable=True),
+    sa.Column('prior_basis', sa.String(length=40), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('symbol')
     )

@@ -126,11 +126,16 @@ class BreakdownOut(BaseModel):
     available: bool
     games: int = 0
     formula_version: str | None = None
+    as_of: _date | None = None
     averages: dict[str, float] = {}
     components: dict[str, float] = {}
     base_value: float = 0.0
     form_multiplier: float = 1.0
     form_adjustment: float = 0.0
+    observed_value: float = 0.0
+    prior_value: float = 0.0
+    prior_basis: str | None = None
+    reliability: float = 0.0
     final_value: float = 0.0
 
 
@@ -148,13 +153,26 @@ class ValidationRowOut(BaseModel):
     games: int
 
 
+class PositionRowOut(BaseModel):
+    position: str
+    n: int
+    avg_value: float
+    avg_production: float
+
+
 class ValidationOut(BaseModel):
     num_players: int
-    corr_value_production: float | None
-    corr_value_minutes: float | None
     min_games: int
+    pearson_value_production: float | None
+    spearman_value_production: float | None
+    pearson_value_minutes: float | None
+    spearman_value_minutes: float | None
+    predictive_n: int
+    predictive_pearson: float | None
+    predictive_spearman: float | None
     top: list[ValidationRowOut]
     watchouts: list[ValidationRowOut]
+    by_position: list[PositionRowOut]
 
 
 @router.get("/methodology/validation", response_model=ValidationOut)
@@ -162,9 +180,15 @@ def methodology_validation(db: Session = Depends(get_db)) -> ValidationOut:
     v = player_analysis.league_validation(db)
     return ValidationOut(
         num_players=v.num_players,
-        corr_value_production=v.corr_value_production,
-        corr_value_minutes=v.corr_value_minutes,
         min_games=v.min_games,
+        pearson_value_production=v.pearson_value_production,
+        spearman_value_production=v.spearman_value_production,
+        pearson_value_minutes=v.pearson_value_minutes,
+        spearman_value_minutes=v.spearman_value_minutes,
+        predictive_n=v.predictive_n,
+        predictive_pearson=v.predictive_pearson,
+        predictive_spearman=v.predictive_spearman,
         top=[ValidationRowOut(**r.__dict__) for r in v.top],
         watchouts=[ValidationRowOut(**r.__dict__) for r in v.watchouts],
+        by_position=[PositionRowOut(**r.__dict__) for r in v.by_position],
     )

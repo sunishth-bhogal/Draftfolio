@@ -19,8 +19,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 # Version the formula: every stored price records the version used to compute it,
-# so historical prices remain reproducible even as the model evolves (v2, v3...).
-FORMULA_VERSION = "v1"
+# so historical prices remain reproducible even as the model evolves.
+# v2 adds Bayesian-style reliability shrinkage toward a prior (see shrink()).
+FORMULA_VERSION = "v2"
+
+# Prior strength in "games". A thin sample is pulled toward the prior; once a
+# player has ~K games the observed value carries the majority weight. 12 games
+# means a 1-game sample is only ~8% trusted, a full season ~85%.
+K_PRIOR = 12
 
 # Per-game production weights (a value-over-replacement style box score).
 W_PTS = 1.0
@@ -86,6 +92,30 @@ def form_multiplier(recent_score: float, season_score: float) -> float:
         return 1.0
     ratio = recent_score / season_score
     return max(0.8, min(1.25, ratio))
+
+
+def reliability(games: int, k: int = K_PRIOR) -> float:
+    """Fraction of weight the observed sample earns: G / (G + K).
+
+    This is *current-season confidence*, not player quality. Two games = low
+    confidence (≈14%), not low ability — the rest of the weight leans on the prior.
+    """
+    if games <= 0:
+        return 0.0
+    return games / (games + k)
+
+
+def shrink(observed: float, prior: float, games: int, k: int = K_PRIOR) -> float:
+    """Bayesian-style shrinkage of an observed value toward a prior.
+
+        V_adjusted = (G/(G+K))·V_observed + (K/(G+K))·V_prior
+
+    A 1-game $670 observation with a $180 prior and K=12 becomes ≈ $218 — thin
+    samples are pulled toward the prior, not toward zero, so a returning star
+    isn't mispriced as worthless.
+    """
+    r = reliability(games, k)
+    return round(r * observed + (1 - r) * prior, 2)
 
 
 def value_breakdown(stats: PlayerStats) -> dict[str, float]:

@@ -1,35 +1,34 @@
-"""Seed the player market with real NBA players from ESPN.
+"""Seed the player market with real NBA players from ESPN (model v2).
 
-Pulls rosters for a set of teams, computes each player's value from their season
-averages, and creates a PLAYER instrument + today's price bar. Prices are in the
-sim's virtual currency (CAD) so players draft alongside everything else with no
-FX friction.
+For each player: fetch season history, derive a current-season observed value and
+a v2 prior (previous-season value for veterans; a position-based league prior for
+rookies), then write today's *reliability-shrunk* price.
 
     DATABASE_URL=... python -m scripts.seed_nba              # marquee teams
     DATABASE_URL=... NBA_TEAMS=all python -m scripts.seed_nba  # all 30 teams
 
-Idempotent: re-running updates existing players (matched on ESPN id) and today's
-price rather than duplicating.
+Idempotent: matches players on ESPN id.
 """
 
 from __future__ import annotations
 
 import os
 import time
+from collections import defaultdict
 from datetime import date, datetime, timezone
 from decimal import Decimal
 
 from sqlalchemy import select
 
 from app.db import SessionLocal
-from app.domain.player_value import value_index
+from app.domain.player_value import FORMULA_VERSION, shrink, value_index
 from app.models import Instrument, PriceBar
 from app.services import nba_espn
 
 CURRENCY = "CAD"  # virtual sim currency
 
 
-def _upsert_player(db, meta: nba_espn.PlayerMeta, value: float) -> Instrument:
+def _upsert_instrument(db, meta: nba_espn.PlayerMeta) -> Instrument:
     symbol = f"NBA:{meta.espn_id}"
     inst = db.scalar(select(Instrument).where(Instrument.symbol == symbol))
     if inst is None:
@@ -39,13 +38,15 @@ def _upsert_player(db, meta: nba_espn.PlayerMeta, value: float) -> Instrument:
     inst.sport = "NBA"
     inst.team = meta.team
     inst.position = meta.position
-    inst.sector = meta.position  # reuse sector slot so existing UI groups by position
+    inst.sector = meta.position
     inst.external_ref = meta.espn_id
     inst.headshot_url = meta.headshot_url
     db.flush()
+    return inst
 
+
+def _write_price(db, inst: Instrument, value: float) -> None:
     today = date.today()
-    now = datetime.now(timezone.utc)
     bar = db.scalar(
         select(PriceBar).where(
             PriceBar.instrument_id == inst.id,
@@ -54,43 +55,64 @@ def _upsert_player(db, meta: nba_espn.PlayerMeta, value: float) -> Instrument:
         )
     )
     if bar is None:
-        bar = PriceBar(
-            instrument_id=inst.id, bar_date=today, currency=CURRENCY, source="nba_espn"
-        )
+        bar = PriceBar(instrument_id=inst.id, bar_date=today, currency=CURRENCY, source="nba_espn")
         db.add(bar)
     bar.close = Decimal(str(value))
-    bar.as_of = now
-    return inst
+    bar.formula_version = FORMULA_VERSION
+    bar.as_of = datetime.now(timezone.utc)
 
 
 def main() -> None:
     which = os.getenv("NBA_TEAMS", "marquee").lower()
-    if which == "all":
-        team_ids = nba_espn.get_team_ids()
-    else:
-        team_ids = nba_espn.MARQUEE_TEAMS
+    team_ids = nba_espn.get_team_ids() if which == "all" else nba_espn.MARQUEE_TEAMS
 
     db = SessionLocal()
-    seeded = 0
+    # Pass 1: instruments + veteran priors + observed value.
+    info: list[tuple[Instrument, float, int, str | None]] = []  # (inst, observed, games, pos)
     for tid in team_ids:
         try:
             roster = nba_espn.get_roster(tid)
         except Exception as e:  # noqa: BLE001
-            print(f"  team {tid}: roster error {e}")
+            print(f"  team {tid}: {e}")
             continue
         for meta in roster:
-            stats = nba_espn.get_season_averages(meta.espn_id)
-            if stats is None:
-                continue  # no stats yet (two-way / rookie preseason) — skip
-            value = value_index(stats, available=not meta.injured)
-            inst = _upsert_player(db, meta, value)
-            seeded += 1
-            print(f"  {inst.name:24} {meta.team:22} {meta.position or '?':3} ${value}")
-            time.sleep(0.05)  # be polite to ESPN
+            hist = nba_espn.get_season_history(meta.espn_id)
+            if not hist:
+                continue
+            current = hist[0][1]
+            observed = value_index(current, available=not meta.injured)
+            inst = _upsert_instrument(db, meta)
+            if len(hist) > 1:  # veteran: previous season is the prior
+                inst.prior_value = value_index(hist[1][1])
+                inst.prior_basis = hist[1][0]
+            else:
+                inst.prior_value = None  # rookie: filled from position prior below
+                inst.prior_basis = None
+            db.flush()
+            info.append((inst, observed, current.games, meta.position))
+            time.sleep(0.03)
         db.commit()
 
+    # Position priors (from veterans) for rookies who lack a previous season.
+    pos_vals: dict[str, list[float]] = defaultdict(list)
+    all_priors = [i.prior_value for i, *_ in info if i.prior_value is not None]
+    league_prior = round(sum(all_priors) / len(all_priors), 2) if all_priors else 100.0
+    for inst, _obs, _g, pos in info:
+        if inst.prior_value is not None and pos:
+            pos_vals[pos].append(inst.prior_value)
+    pos_prior = {p: round(sum(v) / len(v), 2) for p, v in pos_vals.items()}
+
+    # Pass 2: fill rookie priors and write v2 shrunk current prices.
+    for inst, observed, games, pos in info:
+        if inst.prior_value is None:
+            inst.prior_value = pos_prior.get(pos, league_prior)
+            inst.prior_basis = f"POS:{pos or 'NBA'} prior"
+        adjusted = shrink(observed, inst.prior_value, games)
+        _write_price(db, inst, adjusted)
+        print(f"  {inst.name:24} {inst.position or '?':3} obs=${observed} prior=${inst.prior_value} g={games} -> ${adjusted}")
+    db.commit()
     db.close()
-    print(f"Seeded {seeded} NBA players across {len(team_ids)} teams.")
+    print(f"Seeded {len(info)} NBA players (model {FORMULA_VERSION}).")
 
 
 if __name__ == "__main__":

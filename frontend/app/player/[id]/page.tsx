@@ -14,10 +14,13 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
 
   const instruments = useQuery({ queryKey: ["instruments"], queryFn: () => api.instruments() });
   const history = useQuery({ queryKey: ["history", id], queryFn: () => api.history(id) });
+  const breakdown = useQuery({ queryKey: ["breakdown", id], queryFn: () => api.breakdown(id) });
 
   const inst = instruments.data?.find((i) => i.id === id);
   const points = history.data ?? [];
-  const current = points.length ? points[points.length - 1].close : inst?.last_price ?? null;
+  const b = breakdown.data;
+  // The v2 shrunk value is authoritative; label it so it never looks inconsistent.
+  const current = b?.available ? b.final_value : points.length ? points[points.length - 1].close : inst?.last_price ?? null;
 
   const change = (n: number) => {
     if (points.length < n + 1) return null;
@@ -57,6 +60,12 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
           <div className="num text-5xl font-semibold mt-1">
             {current != null ? money2(current) : "—"}
           </div>
+          {b?.available && (
+            <div className="text-xs text-ink-faint mt-1 num">
+              model {b.formula_version} · updated {b.as_of} ·{" "}
+              {(b.reliability * 100).toFixed(0)}% confidence
+            </div>
+          )}
         </div>
         <StatTile label="Daily" value={signedPct(daily)} tone={upDown(daily)} />
         <StatTile label="Weekly (5 games)" value={signedPct(weekly)} tone={upDown(weekly)} />

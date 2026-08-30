@@ -124,11 +124,16 @@ export type Breakdown = {
   available: boolean;
   games: number;
   formula_version: string | null;
+  as_of: string | null;
   averages: Record<string, number>;
   components: Record<string, number>;
   base_value: number;
   form_multiplier: number;
   form_adjustment: number;
+  observed_value: number;
+  prior_value: number;
+  prior_basis: string | null;
+  reliability: number;
   final_value: number;
 };
 
@@ -140,11 +145,24 @@ export type ValidationRow = {
   games: number;
 };
 
+export type PositionRow = {
+  position: string;
+  n: number;
+  avg_value: number;
+  avg_production: number;
+};
+
 export type Validation = {
   num_players: number;
-  corr_value_production: number | null;
-  corr_value_minutes: number | null;
   min_games: number;
+  pearson_value_production: number | null;
+  spearman_value_production: number | null;
+  pearson_value_minutes: number | null;
+  spearman_value_minutes: number | null;
+  predictive_n: number;
+  predictive_pearson: number | null;
+  predictive_spearman: number | null;
   top: ValidationRow[];
   watchouts: ValidationRow[];
+  by_position: PositionRow[];
 };

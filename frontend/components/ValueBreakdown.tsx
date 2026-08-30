@@ -78,11 +78,32 @@ export function ValueBreakdown({ instrumentId }: { instrumentId: string }) {
           value={`${data.form_adjustment >= 0 ? "+" : ""}${money2(data.form_adjustment)}`}
           tone={upDown(data.form_adjustment)}
         />
-        <div className="flex justify-between font-semibold pt-1">
-          <span>Model value</span>
+        <div className="flex justify-between pt-1 font-medium">
+          <span>Observed production value</span>
+          <span className="num">{money2(data.observed_value)}</span>
+        </div>
+      </div>
+
+      {/* v2 reliability shrinkage toward the prior (player quality) */}
+      <div className="mt-4 pt-3 border-t border-line space-y-1 text-sm">
+        <Row
+          label={`Prior value (quality${data.prior_basis ? ` · ${data.prior_basis}` : ""})`}
+          value={money2(data.prior_value)}
+        />
+        <Row
+          label={`Reliability · ${(data.reliability * 100).toFixed(1)}% from ${data.games} games`}
+          value={`${(data.reliability * 100).toFixed(0)}% observed / ${(100 - data.reliability * 100).toFixed(0)}% prior`}
+        />
+        <div className="flex justify-between font-semibold pt-1 text-base">
+          <span>Current value</span>
           <span className="num">{money2(data.final_value)}</span>
         </div>
       </div>
+
+      <p className="text-xs text-ink-faint mt-3">
+        Bayesian shrinkage: a thin sample leans on the player&apos;s quality prior, so a low
+        reliability means <b>low current-season confidence</b>, not low ability.
+      </p>
     </Card>
   );
 }

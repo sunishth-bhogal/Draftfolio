@@ -56,6 +56,10 @@ class Instrument(Base):
     position: Mapped[str | None] = mapped_column(String(20), nullable=True)
     external_ref: Mapped[str | None] = mapped_column(String(40), nullable=True)  # ESPN athlete id
     headshot_url: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    # v2 shrinkage prior (player quality): previous-season value for veterans, a
+    # position-based league prior for rookies. Separate from current-season data.
+    prior_value: Mapped[float | None] = mapped_column(nullable=True)
+    prior_basis: Mapped[str | None] = mapped_column(String(40), nullable=True)
 
 
 class Portfolio(Base):

@@ -62,4 +62,5 @@ def test_validation_flags_small_sample(db_session):
     assert "Reliable Star" in top_names  # enough games -> ranked
     assert "One Game Wonder" not in top_names  # excluded from reliable top
     assert "One Game Wonder" in watch_names  # surfaced as a small-sample watch-out
-    assert v.corr_value_production is not None
+    assert v.pearson_value_production is not None
+    assert v.spearman_value_production is not None
