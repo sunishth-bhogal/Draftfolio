@@ -48,6 +48,9 @@ class User(Base):
     level: Mapped[int] = mapped_column(default=1)
     division: Mapped[str] = mapped_column(String(20), default="Bronze")
     division_points: Mapped[int] = mapped_column(default=0)
+    # Daily-pack economy
+    last_claim_date: Mapped[object | None] = mapped_column(Date, nullable=True)
+    login_streak: Mapped[int] = mapped_column(default=0)
 
 
 class Gameweek(Base):

@@ -8,6 +8,7 @@ import { getToken } from "@/lib/auth";
 import { money, money2, signedPct, upDown } from "@/lib/format";
 import { EquityChart } from "@/components/EquityChart";
 import { Card, Bar } from "@/components/ui";
+import { DailyPack } from "@/components/DailyPack";
 
 export default function Home() {
   const [hasToken, setHasToken] = useState(false);
@@ -73,6 +74,8 @@ export default function Home() {
           <Link href="/rivals" className="text-ink-soft hover:text-ink">Rivals →</Link>
         </div>
       </div>
+
+      <DailyPack />
 
       {/* Portfolio value — front and centre */}
       <section>

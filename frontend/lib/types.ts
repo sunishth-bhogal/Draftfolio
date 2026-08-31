@@ -227,3 +227,17 @@ export type Rivals = {
   relegate_at: number;
   standings: Standing[];
 };
+
+export type DailyStatus = {
+  can_claim: boolean;
+  streak: number;
+  next_reward_estimate: number;
+};
+
+export type ClaimResult = {
+  reward: number;
+  streak: number;
+  is_welcome: boolean;
+  xp_awarded: number;
+  new_cash: number;
+};

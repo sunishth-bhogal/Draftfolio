@@ -17,7 +17,7 @@ from app.services.rivals import xp_progress
 
 router = APIRouter()
 
-STARTING_CASH = Decimal("100000")
+STARTING_CASH = Decimal("0")  # start empty; build capital via daily packs
 
 
 class SignupRequest(BaseModel):

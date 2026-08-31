@@ -7,6 +7,8 @@ import type {
   Catalysts,
   Composition,
   Leaderboard,
+  ClaimResult,
+  DailyStatus,
   Me,
   Portfolio,
   PricePoint,
@@ -64,6 +66,8 @@ export const api = {
     post<{ token: string; user: Me }>("/auth/login", { login, password }),
   me: () => get<Me>("/me"),
   rivals: () => get<Rivals>("/rivals"),
+  dailyStatus: () => get<DailyStatus>("/daily/status"),
+  claimDaily: () => post<ClaimResult>("/daily/claim", {}),
   validation: () => get<Validation>("/methodology/validation"),
   createPortfolio: (name: string, starting_cash = 100000) =>
     post<Portfolio>("/portfolios", { name, starting_cash }),
