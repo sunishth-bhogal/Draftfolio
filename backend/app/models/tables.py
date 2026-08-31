@@ -196,6 +196,24 @@ class PortfolioSnapshot(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 
+class EtfConstituent(Base):
+    """Membership of a player-index ETF: which players it holds, and at what weight.
+
+    An ETF is an Instrument (asset_class='ETF'); its price is the weighted basket
+    of its constituents' values, so it gets a real history from the underlying.
+    """
+
+    __tablename__ = "etf_constituents"
+    __table_args__ = (
+        UniqueConstraint("etf_id", "member_id", name="uq_etf_member"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid)
+    etf_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("instruments.id"), index=True)
+    member_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("instruments.id"), index=True)
+    weight: Mapped[float] = mapped_column(default=1.0)
+
+
 class PlayerGame(Base):
     """Raw per-game observation for a player — the immutable source data.
 

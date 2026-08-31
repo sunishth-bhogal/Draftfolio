@@ -8,6 +8,7 @@ import { money2, signedPct, upDown } from "@/lib/format";
 import { PriceChart } from "@/components/PriceChart";
 import { ValueBreakdown } from "@/components/ValueBreakdown";
 import { Catalysts } from "@/components/Catalysts";
+import { Composition } from "@/components/Composition";
 import { Card, StatTile } from "@/components/ui";
 
 export default function PlayerPage({ params }: { params: Promise<{ id: string }> }) {
@@ -18,6 +19,7 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
   const breakdown = useQuery({ queryKey: ["breakdown", id], queryFn: () => api.breakdown(id) });
 
   const inst = instruments.data?.find((i) => i.id === id);
+  const isEtf = inst?.asset_class === "ETF";
   const points = history.data ?? [];
   const b = breakdown.data;
   // The v2 shrunk value is authoritative; label it so it never looks inconsistent.
@@ -39,18 +41,26 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
       </Link>
 
       <section className="flex items-center gap-4">
-        {inst?.headshot_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={inst.headshot_url}
-            alt={inst?.name ?? ""}
-            className="h-20 w-20 rounded-full bg-card object-cover border border-line"
-          />
+        {isEtf ? (
+          <div className="h-20 w-20 rounded-2xl bg-ink text-cream flex items-center justify-center text-2xl font-semibold">
+            {inst?.sport === "NHL" ? "🏒" : inst?.sport === "MULTI" ? "★" : "🏀"}
+          </div>
+        ) : (
+          inst?.headshot_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={inst.headshot_url}
+              alt={inst?.name ?? ""}
+              className="h-20 w-20 rounded-full bg-card object-cover border border-line"
+            />
+          )
         )}
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">{inst?.name ?? "Player"}</h1>
           <div className="text-ink-soft text-sm">
-            {inst?.position ?? "?"} · {inst?.team ?? ""} · {inst?.sport ?? ""}
+            {isEtf
+              ? `Index fund · ${inst?.sport ?? ""}`
+              : `${inst?.position ?? "?"} · ${inst?.team ?? ""} · ${inst?.sport ?? ""}`}
           </div>
         </div>
       </section>
@@ -76,16 +86,21 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
         <div className="flex items-baseline justify-between mb-3">
           <h2 className="font-semibold">Value history</h2>
           <span className="text-xs text-ink-faint num">
-            {points.length} game observations · model{" "}
+            {points.length} {isEtf ? "index points" : "game observations"} · model{" "}
             {points.find((p) => p.formula_version)?.formula_version ?? "—"}
           </span>
         </div>
         <PriceChart data={points} />
       </Card>
 
-      <Catalysts instrumentId={id} />
-
-      <ValueBreakdown instrumentId={id} />
+      {isEtf ? (
+        <Composition instrumentId={id} />
+      ) : (
+        <>
+          <Catalysts instrumentId={id} />
+          <ValueBreakdown instrumentId={id} />
+        </>
+      )}
 
       <p className="text-xs text-ink-faint">
         A simulated market. Values are a transparent index derived from real box-score

@@ -1,6 +1,7 @@
 from .base import Base
 from .tables import (
     CashBalance,
+    EtfConstituent,
     Instrument,
     Order,
     Portfolio,
@@ -22,6 +23,7 @@ __all__ = [
     "Transaction",
     "Position",
     "CashBalance",
+    "EtfConstituent",
     "PriceBar",
     "PortfolioSnapshot",
     "PlayerGame",

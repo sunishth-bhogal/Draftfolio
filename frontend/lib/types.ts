@@ -181,3 +181,17 @@ export type Catalysts = {
   summary: string;
   items: CatalystItem[];
 };
+
+export type Constituent = {
+  symbol: string;
+  name: string;
+  member_id: string;
+  value: number | null;
+  weight_pct: number;
+};
+
+export type Composition = {
+  available: boolean;
+  count: number;
+  constituents: Constituent[];
+};

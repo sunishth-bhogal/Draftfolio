@@ -17,6 +17,7 @@ from app.db import get_db
 from app.models import Instrument, PriceBar, Portfolio, User
 from app.services import bootstrap
 from app.services import catalysts as catalyst_svc
+from app.services import etf as etf_svc
 from app.services import player_analysis
 from app.services.valuation import latest_close
 
@@ -219,4 +220,29 @@ def instrument_catalysts(instrument_id: uuid.UUID, db: Session = Depends(get_db)
         price_change=c.price_change,
         summary=c.summary,
         items=[CatalystItemOut(**i.__dict__) for i in c.items],
+    )
+
+
+class ConstituentOut(BaseModel):
+    symbol: str
+    name: str
+    member_id: uuid.UUID
+    value: float | None
+    weight_pct: float
+
+
+class CompositionOut(BaseModel):
+    available: bool
+    count: int = 0
+    constituents: list[ConstituentOut] = []
+
+
+@router.get("/instruments/{instrument_id}/composition", response_model=CompositionOut)
+def instrument_composition(instrument_id: uuid.UUID, db: Session = Depends(get_db)) -> CompositionOut:
+    c = etf_svc.etf_composition(db, instrument_id)
+    if not c.available:
+        return CompositionOut(available=False)
+    return CompositionOut(
+        available=True, count=c.count,
+        constituents=[ConstituentOut(**r.__dict__) for r in c.constituents],
     )

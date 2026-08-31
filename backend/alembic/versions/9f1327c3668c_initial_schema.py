@@ -1,8 +1,8 @@
 """initial schema
 
-Revision ID: edc81ea22d82
+Revision ID: 9f1327c3668c
 Revises: 
-Create Date: 2026-08-31 16:34:40.309916
+Create Date: 2026-08-31 17:46:44.292111
 """
 from typing import Sequence, Union
 
@@ -10,7 +10,7 @@ from alembic import op
 import sqlalchemy as sa
 import app.models.base
 
-revision: str = 'edc81ea22d82'
+revision: str = '9f1327c3668c'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -44,6 +44,20 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
+    op.create_table('etf_constituents',
+    sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('etf_id', sa.Uuid(), nullable=False),
+    sa.Column('member_id', sa.Uuid(), nullable=False),
+    sa.Column('weight', sa.Float(), nullable=False),
+    sa.ForeignKeyConstraint(['etf_id'], ['instruments.id'], ),
+    sa.ForeignKeyConstraint(['member_id'], ['instruments.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('etf_id', 'member_id', name='uq_etf_member')
+    )
+    with op.batch_alter_table('etf_constituents', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_etf_constituents_etf_id'), ['etf_id'], unique=False)
+        batch_op.create_index(batch_op.f('ix_etf_constituents_member_id'), ['member_id'], unique=False)
+
     op.create_table('player_games',
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('instrument_id', sa.Uuid(), nullable=False),
@@ -215,6 +229,11 @@ def downgrade() -> None:
         batch_op.drop_index(batch_op.f('ix_player_games_game_date'))
 
     op.drop_table('player_games')
+    with op.batch_alter_table('etf_constituents', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_etf_constituents_member_id'))
+        batch_op.drop_index(batch_op.f('ix_etf_constituents_etf_id'))
+
+    op.drop_table('etf_constituents')
     op.drop_table('users')
     op.drop_table('instruments')
     # ### end Alembic commands ###
