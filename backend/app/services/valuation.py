@@ -31,6 +31,7 @@ from app.models import (
 
 @dataclass
 class Holding:
+    instrument_id: uuid.UUID
     symbol: str
     name: str
     quantity: Decimal
@@ -126,7 +127,7 @@ def value_portfolio(
             continue
         mv = (qty * price).quantize(Decimal("0.0001"))
         market_value += mv
-        holdings.append(Holding(inst.symbol, inst.name, qty, price, mv, Decimal("0")))
+        holdings.append(Holding(inst.id, inst.symbol, inst.name, qty, price, mv, Decimal("0")))
 
     equity = (cash + market_value).quantize(Decimal("0.0001"))
     # Fill in weights now that we know equity.

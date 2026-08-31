@@ -19,6 +19,7 @@ export type Instrument = {
 };
 
 export type Holding = {
+  instrument_id: string;
   symbol: string;
   name: string;
   quantity: number;
