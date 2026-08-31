@@ -94,6 +94,22 @@ def form_multiplier(recent_score: float, season_score: float) -> float:
     return max(0.8, min(1.25, ratio))
 
 
+def value_from_production(
+    production: float, scale: float, *, form_multiplier: float = 1.0, available: bool = True
+) -> float:
+    """Dollar value from a (sport-agnostic) per-game production score.
+
+    Same shape as value_index but driven by a precomputed production number, so
+    every sport shares one value/shrinkage pipeline.
+    """
+    if production <= 0:
+        return FLOOR
+    value = production * scale * form_multiplier
+    if not available:
+        value *= 0.6
+    return round(max(FLOOR, value), 2)
+
+
 def reliability(games: int, k: int = K_PRIOR) -> float:
     """Fraction of weight the observed sample earns: G / (G + K).
 

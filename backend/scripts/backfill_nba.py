@@ -26,7 +26,7 @@ def main() -> None:
     players = list(
         db.scalars(
             select(Instrument)
-            .where(Instrument.asset_class == "PLAYER")
+            .where(Instrument.asset_class == "PLAYER", Instrument.sport == "NBA")
             .order_by(Instrument.name)
         )
     )

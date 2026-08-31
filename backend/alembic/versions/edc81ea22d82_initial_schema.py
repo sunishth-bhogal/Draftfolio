@@ -1,8 +1,8 @@
 """initial schema
 
-Revision ID: 0c4a13c73030
+Revision ID: edc81ea22d82
 Revises: 
-Create Date: 2026-08-30 01:50:34.890843
+Create Date: 2026-08-31 16:34:40.309916
 """
 from typing import Sequence, Union
 
@@ -10,7 +10,7 @@ from alembic import op
 import sqlalchemy as sa
 import app.models.base
 
-revision: str = '0c4a13c73030'
+revision: str = 'edc81ea22d82'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -58,6 +58,8 @@ def upgrade() -> None:
     sa.Column('steals', sa.Float(), nullable=False),
     sa.Column('blocks', sa.Float(), nullable=False),
     sa.Column('turnovers', sa.Float(), nullable=False),
+    sa.Column('stats_json', sa.Text(), nullable=True),
+    sa.Column('production', sa.Float(), nullable=True),
     sa.Column('source', sa.String(length=40), nullable=False),
     sa.Column('as_of', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['instrument_id'], ['instruments.id'], ),

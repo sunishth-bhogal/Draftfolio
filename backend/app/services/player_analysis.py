@@ -7,6 +7,7 @@ audited offline.
 
 from __future__ import annotations
 
+import json
 import math
 import uuid
 from dataclasses import dataclass, field
@@ -22,9 +23,10 @@ from app.domain.player_value import (
     production_score,
     reliability,
     shrink,
-    value_breakdown,
+    value_from_production,
     value_index,
 )
+from app.domain.sports import SPORTS, production_from_stats, value_components
 from app.models import Instrument, PlayerGame
 
 FORM_WINDOW = 5
@@ -64,6 +66,20 @@ class Breakdown:
     final_value: float = 0.0  # shrunk value actually shown/traded
 
 
+def _mean_stat_dict(rows: list[PlayerGame], keys: list[str]) -> dict[str, float]:
+    from app.services.game_stats import game_stats
+
+    n = len(rows)
+    if n == 0:
+        return {k: 0.0 for k in keys}
+    out: dict[str, float] = {k: 0.0 for k in keys}
+    for r in rows:
+        stats = game_stats(r)
+        for k in keys:
+            out[k] += float(stats.get(k, 0.0))
+    return {k: v / n for k, v in out.items()}
+
+
 def value_breakdown_for(db: Session, instrument_id: uuid.UUID) -> Breakdown:
     inst = db.get(Instrument, instrument_id)
     rows = list(
@@ -73,34 +89,33 @@ def value_breakdown_for(db: Session, instrument_id: uuid.UUID) -> Breakdown:
             .order_by(PlayerGame.game_date.asc())
         )
     )
-    if not rows:
+    if not rows or not inst:
         return Breakdown(available=False)
 
-    season = _mean_stats(rows)
-    recent = _mean_stats(rows[-FORM_WINDOW:])
-    form = form_multiplier(production_score(recent), production_score(season))
+    sport = inst.sport or "NBA"
+    model = SPORTS[sport]
+    keys = list(model.weights)
+    season = _mean_stat_dict(rows, keys)
+    recent = _mean_stat_dict(rows[-FORM_WINDOW:], keys)
     games = len(rows)
 
-    base = round(max(FLOOR, production_score(season) * 12.0), 2)  # VALUE_SCALE
-    observed = value_index(season, form_multiplier=form)  # pre-shrinkage
-    prior = float(inst.prior_value) if inst and inst.prior_value is not None else observed
+    season_prod = production_from_stats(sport, season)
+    recent_prod = production_from_stats(sport, recent)
+    form = form_multiplier(recent_prod, season_prod)
+
+    base = round(max(FLOOR, season_prod * model.scale), 2)
+    observed = value_from_production(season_prod, model.scale, form_multiplier=form)
+    prior = float(inst.prior_value) if inst.prior_value is not None else observed
     rel = reliability(games)
     adjusted = shrink(observed, prior, games)
 
+    avg_minutes = sum(r.minutes for r in rows) / games
     return Breakdown(
         available=True,
         games=games,
         as_of=rows[-1].game_date,
-        averages={
-            "points": round(season.points, 1),
-            "rebounds": round(season.rebounds, 1),
-            "assists": round(season.assists, 1),
-            "steals": round(season.steals, 1),
-            "blocks": round(season.blocks, 1),
-            "turnovers": round(season.turnovers, 1),
-            "minutes": round(season.minutes, 1),
-        },
-        components=value_breakdown(season),
+        averages={**{k: round(v, 1) for k, v in season.items()}, "minutes": round(avg_minutes, 1)},
+        components=value_components(sport, season),
         base_value=base,
         form_multiplier=round(form, 3),
         form_adjustment=round(base * (form - 1.0), 2),
@@ -184,23 +199,40 @@ class Validation:
     by_position: list[PositionRow] = field(default_factory=list)
 
 
-def _future_split_value(games: list[PlayerGame]) -> tuple[float, float] | None:
+def _productions(games: list[PlayerGame], sport: str = "NBA") -> list[float]:
+    from app.services.game_stats import game_production
+
+    return [game_production(g, sport) for g in games]
+
+
+def _primary_scoring(game: PlayerGame, sport: str) -> float:
+    from app.services.game_stats import game_stats
+
+    stats = game_stats(game)
+    if sport == "NHL":
+        return float(stats.get("goals", 0.0)) + float(stats.get("assists", 0.0))
+    return float(stats.get("points", 0.0))
+
+
+def _future_split_value(games: list[PlayerGame], scale: float, sport: str) -> tuple[float, float] | None:
     """Value from the first half of games; mean production over the second half.
 
     Chronological split so the value never sees the games it's judged against.
+    Sport-agnostic via stored per-game production.
     """
     if len(games) < 10:
         return None
     games = sorted(games, key=lambda g: g.game_date)
+    prods = _productions(games, sport)
     h = len(games) // 2
-    train, test = games[:h], games[h:]
+    train, test = prods[:h], prods[h:]
     if not test:
         return None
-    tstats = _mean_stats(train)
-    recent = _mean_stats(train[-FORM_WINDOW:])
-    form = form_multiplier(production_score(recent), production_score(tstats))
-    value = value_index(tstats, form_multiplier=form)
-    future = sum(production_score(_mean_stats([g])) for g in test) / len(test)
+    season = sum(train) / len(train)
+    recent = sum(train[-FORM_WINDOW:]) / len(train[-FORM_WINDOW:])
+    form = form_multiplier(recent, season)
+    value = value_from_production(season, scale, form_multiplier=form)
+    future = sum(test) / len(test)
     return value, future
 
 
@@ -222,18 +254,22 @@ def league_validation(db: Session) -> Validation:
         games = list(db.scalars(select(PlayerGame).where(PlayerGame.instrument_id == p.id)))
         if not games:
             continue
-        s = _mean_stats(games)
-        prod = production_score(s)
-        val = value_index(s)
+        sport = p.sport or "NBA"
+        scale = SPORTS[sport].scale
+        game_prods = _productions(games, sport)
+        prod = sum(game_prods) / len(game_prods)
+        val = value_from_production(prod, scale)
+        ppg = sum(_primary_scoring(g, sport) for g in games) / len(games)
+        avg_min = sum(g.minutes for g in games) / len(games)
         values.append(val)
         prods.append(prod)
-        mins.append(s.minutes)
-        rows.append(ValidationRow(p.name, val, round(s.points, 1), round(prod, 1), len(games)))
+        mins.append(avg_min)
+        rows.append(ValidationRow(p.name, val, round(ppg, 1), round(prod, 1), len(games)))
         pos = p.position or "?"
         pos_values.setdefault(pos, []).append(val)
         pos_prods.setdefault(pos, []).append(prod)
 
-        split = _future_split_value(games)
+        split = _future_split_value(games, scale, sport)
         if split is not None:
             train_vals.append(split[0])
             future_prods.append(split[1])

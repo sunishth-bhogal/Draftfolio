@@ -12,6 +12,10 @@ const STAT_LABEL: Record<string, string> = {
   steals: "Steals",
   blocks: "Blocks",
   turnovers: "Turnovers",
+  goals: "Goals",
+  shots: "Shots",
+  plus_minus: "+/−",
+  pim: "PIM",
 };
 
 export function ValueBreakdown({ instrumentId }: { instrumentId: string }) {

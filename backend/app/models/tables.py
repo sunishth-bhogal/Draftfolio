@@ -16,6 +16,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     String,
+    Text,
     UniqueConstraint,
     Uuid,
 )
@@ -223,6 +224,10 @@ class PlayerGame(Base):
     steals: Mapped[float] = mapped_column(default=0.0)
     blocks: Mapped[float] = mapped_column(default=0.0)
     turnovers: Mapped[float] = mapped_column(default=0.0)
+    # Sport-agnostic: raw stats as JSON + the computed per-game production score,
+    # so hockey (and future sports) reuse the same value/breakdown pipeline.
+    stats_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    production: Mapped[float | None] = mapped_column(nullable=True)
     source: Mapped[str] = mapped_column(String(40), default="nba_espn")
     as_of: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 

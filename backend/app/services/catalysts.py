@@ -1,14 +1,14 @@
 """Daily price catalysts — the *why* behind a player's latest value move.
 
-Deterministic, derived from stored raw games (+ injury status). Each catalyst is
-a labeled, directional reason: recent performance vs the player's norm, a minutes
-change, hot/cold form, availability, and the opponent faced. These both power the
-player page's "What moved it" and are emitted as signal_events so the portfolio
-"why did it move?" explainer can surface player-level drivers.
+Deterministic, derived from stored raw games (+ injury status). Sport-agnostic:
+performance direction uses the stored per-game production; the box line is
+formatted per sport. Both power the player page's "What moved it" and are emitted
+as signal_events for the portfolio "why did it move?" explainer.
 """
 
 from __future__ import annotations
 
+import json
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -16,10 +16,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.domain.player_value import (
-    form_multiplier,
-    production_score,
-)
+from app.domain.player_value import form_multiplier
 from app.models import Instrument, PlayerGame, PriceBar, SignalEvent
 
 FORM_WINDOW = 5
@@ -37,15 +34,24 @@ class Catalyst:
 class Catalysts:
     available: bool
     as_of: object | None = None
-    price_change: float | None = None  # latest price bar vs the previous one
+    price_change: float | None = None
     summary: str = ""
     items: list[Catalyst] = field(default_factory=list)
 
 
-def _prod_of(g: PlayerGame) -> float:
-    from app.services.player_analysis import _mean_stats
+def _prod(g: PlayerGame, sport: str = "NBA") -> float:
+    from app.services.game_stats import game_production
 
-    return production_score(_mean_stats([g]))
+    return game_production(g, sport)
+
+
+def _box_line(g: PlayerGame, sport: str) -> str:
+    from app.services.game_stats import game_stats
+
+    stats = game_stats(g)
+    if sport == "NHL":
+        return f"{stats.get('goals', 0):.0f} G, {stats.get('assists', 0):.0f} A, {stats.get('shots', 0):.0f} SOG"
+    return f"{stats.get('points', 0):.0f} PTS, {stats.get('rebounds', 0):.0f} REB, {stats.get('assists', 0):.0f} AST"
 
 
 def _close_on(db: Session, instrument_id: uuid.UUID, bar_date) -> float | None:
@@ -53,20 +59,13 @@ def _close_on(db: Session, instrument_id: uuid.UUID, bar_date) -> float | None:
         select(PriceBar).where(
             PriceBar.instrument_id == instrument_id,
             PriceBar.bar_date == bar_date,
-            PriceBar.source == "nba_espn",
+            PriceBar.source == "espn",
         )
     )
     return float(bar.close) if bar is not None else None
 
 
-def _game_over_game_change(
-    db: Session, instrument_id: uuid.UUID, games: list[PlayerGame]
-) -> float | None:
-    """Move attributable to the latest game: value on its date vs the prior game's.
-
-    Uses game dates (not the current 'today' mark) so the % move lines up with the
-    catalysts that explain it.
-    """
+def _game_over_game_change(db, instrument_id, games: list[PlayerGame]) -> float | None:
     if len(games) < 2:
         return None
     a = _close_on(db, instrument_id, games[-2].game_date)
@@ -88,13 +87,13 @@ def player_catalysts(db: Session, instrument_id: uuid.UUID) -> Catalysts:
     if not inst or not games:
         return Catalysts(available=False)
 
+    sport = inst.sport or "NBA"
     last = games[-1]
-    season_prod = sum(_prod_of(g) for g in games) / len(games)
-    last_prod = _prod_of(last)
+    season_prod = sum(_prod(g, sport) for g in games) / len(games)
+    last_prod = _prod(last, sport)
     items: list[Catalyst] = []
 
-    # 1) Recent performance vs the player's own norm.
-    box = f"{last.points:.0f} PTS, {last.rebounds:.0f} REB, {last.assists:.0f} AST"
+    box = _box_line(last, sport)
     if last_prod >= season_prod * 1.15:
         items.append(Catalyst("performance", "up", "Big game", f"{box} — above the season norm"))
     elif last_prod <= season_prod * 0.85:
@@ -102,34 +101,26 @@ def player_catalysts(db: Session, instrument_id: uuid.UUID) -> Catalysts:
     else:
         items.append(Catalyst("performance", "neutral", "In line", f"{box} — around the norm"))
 
-    # 2) Minutes vs the trailing average (role change).
     prior_games = games[:-1]
     if prior_games:
-        avg_min = sum(g.minutes for g in prior_games[-10:]) / len(prior_games[-10:])
+        recent10 = prior_games[-10:]
+        avg_min = sum(g.minutes for g in recent10) / len(recent10)
+        unit = "min"
         if last.minutes >= avg_min + 4:
-            items.append(Catalyst("minutes", "up", "Elevated minutes", f"{last.minutes:.0f} min vs ~{avg_min:.0f} usual"))
+            items.append(Catalyst("minutes", "up", "Elevated ice time", f"{last.minutes:.0f} {unit} vs ~{avg_min:.0f} usual"))
         elif last.minutes <= avg_min - 6:
-            items.append(Catalyst("minutes", "down", "Reduced minutes", f"{last.minutes:.0f} min vs ~{avg_min:.0f} usual"))
+            items.append(Catalyst("minutes", "down", "Reduced ice time", f"{last.minutes:.0f} {unit} vs ~{avg_min:.0f} usual"))
 
-    # 3) Hot/cold form (last 5 vs season).
-    from app.services.player_analysis import _mean_stats
-
-    form = form_multiplier(
-        production_score(_mean_stats(games[-FORM_WINDOW:])),
-        production_score(_mean_stats(games)),
-    )
+    recent = [_prod(g, sport) for g in games[-FORM_WINDOW:]]
+    form = form_multiplier(sum(recent) / len(recent), season_prod)
     if form >= 1.05:
         items.append(Catalyst("form", "up", "Hot streak", f"last {min(FORM_WINDOW, len(games))} games running +{(form - 1) * 100:.0f}%"))
     elif form <= 0.95:
         items.append(Catalyst("form", "down", "Cold streak", f"last {min(FORM_WINDOW, len(games))} games {(form - 1) * 100:.0f}%"))
 
-    # 4) Availability (persisted injury status).
     if inst.injury_status:
-        items.append(
-            Catalyst("availability", "down", f"Listed {inst.injury_status}", "availability discount applied")
-        )
+        items.append(Catalyst("availability", "down", f"Listed {inst.injury_status}", "availability discount applied"))
 
-    # 5) Opponent context (not a value driver, but explains the game).
     if last.opponent:
         items.append(Catalyst("schedule", "neutral", f"vs {last.opponent}", "most recent matchup"))
 
@@ -146,8 +137,6 @@ def player_catalysts(db: Session, instrument_id: uuid.UUID) -> Catalysts:
 
 
 def write_catalyst_signal(db: Session, instrument: Instrument) -> SignalEvent | None:
-    """Emit a signal_event for a notable latest-game catalyst, so the portfolio
-    explainer can attribute a move to a player. No-op if nothing notable."""
     cats = player_catalysts(db, instrument.id)
     if not cats.available:
         return None
