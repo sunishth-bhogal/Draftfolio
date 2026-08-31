@@ -4,26 +4,20 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import { getToken } from "@/lib/auth";
 import { money, money2, signedPct, upDown } from "@/lib/format";
 import { EquityChart } from "@/components/EquityChart";
 import { Card, Bar } from "@/components/ui";
 
 export default function Home() {
-  const portfolios = useQuery({ queryKey: ["portfolios"], queryFn: () => api.portfolios() });
-  const [pid, setPid] = useState<string | null>(null);
-
-  // Default to the saved / first portfolio (Robinhood-style: your holdings on open).
+  const [hasToken, setHasToken] = useState(false);
+  const [ready, setReady] = useState(false);
   useEffect(() => {
-    if (pid || !portfolios.data?.length) return;
-    const saved = typeof window !== "undefined" ? localStorage.getItem("pid") : null;
-    const exists = saved && portfolios.data.some((p) => p.id === saved);
-    setPid(exists ? saved! : portfolios.data[0].id);
-  }, [portfolios.data, pid]);
-
-  function choose(id: string) {
-    setPid(id);
-    if (typeof window !== "undefined") localStorage.setItem("pid", id);
-  }
+    setHasToken(!!getToken());
+    setReady(true);
+  }, []);
+  const me = useQuery({ queryKey: ["me"], queryFn: () => api.me(), enabled: hasToken, retry: false });
+  const pid = me.data?.portfolio_id ?? null;
 
   const valuation = useQuery({
     queryKey: ["valuation", pid],
@@ -41,31 +35,42 @@ export default function Home() {
   const totalReturn = series.length ? series[series.length - 1].cumulative_return : null;
   const dayReturn = series.length ? series[series.length - 1].daily_return : null;
 
+  if (!ready) return null;
+
+  if (!hasToken) {
+    return (
+      <div className="max-w-xl mx-auto text-center mt-10 space-y-5">
+        <h1 className="text-4xl font-semibold tracking-tight">
+          Draft a team. Trade the market. Climb the divisions.
+        </h1>
+        <p className="text-ink-soft">
+          A simulated multi-sport market — trade performance-linked NBA & NHL player assets and
+          index funds, then compete gameweek to gameweek for XP and promotion.
+        </p>
+        <div className="flex items-center justify-center gap-3">
+          <Link href="/login" className="rounded-xl bg-ink text-cream px-5 py-3 font-medium hover:opacity-90">
+            Create your team
+          </Link>
+          <Link href="/markets" className="rounded-xl border border-line px-5 py-3 font-medium hover:border-ink">
+            Browse markets
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
-      {/* Portfolio switcher (stands in for accounts until auth) */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <select
-          value={pid ?? ""}
-          onChange={(e) => choose(e.target.value)}
-          className="rounded-xl border border-line bg-card px-4 py-2 text-sm font-medium focus:border-ink outline-none"
-        >
-          {portfolios.data?.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
+        <div className="text-sm text-ink-soft">
+          {me.data?.username}&apos;s team ·{" "}
+          <span className="rounded-full bg-accent/30 text-accent-deep px-2 py-0.5 text-xs">
+            {me.data?.division}
+          </span>
+        </div>
         <div className="flex items-center gap-4 text-sm">
-          <Link href="/markets" className="text-ink-soft hover:text-ink">
-            Browse markets →
-          </Link>
-          <Link
-            href="/draft"
-            className="rounded-xl bg-ink text-cream px-4 py-2 font-medium hover:opacity-90"
-          >
-            + New portfolio
-          </Link>
+          <Link href="/markets" className="text-ink-soft hover:text-ink">Browse markets →</Link>
+          <Link href="/rivals" className="text-ink-soft hover:text-ink">Rivals →</Link>
         </div>
       </div>
 

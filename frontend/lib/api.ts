@@ -1,3 +1,4 @@
+import { getToken } from "./auth";
 import type {
   Analytics,
   Explanation,
@@ -6,8 +7,10 @@ import type {
   Catalysts,
   Composition,
   Leaderboard,
+  Me,
   Portfolio,
   PricePoint,
+  Rivals,
   Validation,
   ReturnPoint,
   ScoreMode,
@@ -16,8 +19,13 @@ import type {
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+function authHeaders(): Record<string, string> {
+  const t = getToken();
+  return t ? { Authorization: `Bearer ${t}` } : {};
+}
+
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, { cache: "no-store" });
+  const res = await fetch(`${BASE}${path}`, { cache: "no-store", headers: authHeaders() });
   if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${path}`);
   return res.json() as Promise<T>;
 }
@@ -29,7 +37,7 @@ async function post<T>(
 ): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...headers },
+    headers: { "Content-Type": "application/json", ...authHeaders(), ...headers },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${path}`);
@@ -50,6 +58,12 @@ export const api = {
   breakdown: (id: string) => get<Breakdown>(`/instruments/${id}/breakdown`),
   catalysts: (id: string) => get<Catalysts>(`/instruments/${id}/catalysts`),
   composition: (id: string) => get<Composition>(`/instruments/${id}/composition`),
+  signup: (email: string, username: string, password: string) =>
+    post<{ token: string; user: Me }>("/auth/signup", { email, username, password }),
+  login: (login: string, password: string) =>
+    post<{ token: string; user: Me }>("/auth/login", { login, password }),
+  me: () => get<Me>("/me"),
+  rivals: () => get<Rivals>("/rivals"),
   validation: () => get<Validation>("/methodology/validation"),
   createPortfolio: (name: string, starting_cash = 100000) =>
     post<Portfolio>("/portfolios", { name, starting_cash }),

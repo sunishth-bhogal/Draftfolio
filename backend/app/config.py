@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     env: str = "development"
     # Comma-separated list of allowed browser origins for CORS.
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+    # Auth — override in production via env.
+    secret_key: str = "dev-secret-change-me-in-production-0123456789"
+    token_ttl_hours: int = 720
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

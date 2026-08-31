@@ -196,3 +196,34 @@ export type Composition = {
   count: number;
   constituents: Constituent[];
 };
+
+export type Me = {
+  id: string;
+  username: string;
+  display_name: string;
+  email: string;
+  xp: number;
+  level: number;
+  xp_into_level: number;
+  xp_per_level: number;
+  division: string;
+  division_points: number;
+  portfolio_id: string | null;
+};
+
+export type Standing = {
+  username: string;
+  display_name: string;
+  level: number;
+  xp: number;
+  division_points: number;
+  is_me: boolean;
+};
+
+export type Rivals = {
+  division: string;
+  divisions: string[];
+  promote_at: number;
+  relegate_at: number;
+  standings: Standing[];
+};

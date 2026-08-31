@@ -1,5 +1,7 @@
 from .base import Base
 from .tables import (
+    GameweekResult,
+    Gameweek,
     CashBalance,
     EtfConstituent,
     Instrument,
@@ -15,6 +17,8 @@ from .tables import (
 )
 
 __all__ = [
+    "GameweekResult",
+    "Gameweek",
     "Base",
     "User",
     "Instrument",

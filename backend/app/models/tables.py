@@ -40,6 +40,40 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(320), unique=True)
     display_name: Mapped[str] = mapped_column(String(120))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    # Auth
+    username: Mapped[str | None] = mapped_column(String(40), unique=True, nullable=True)
+    password_hash: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    # Progression (NHL-FS style ladder)
+    xp: Mapped[int] = mapped_column(default=0)
+    level: Mapped[int] = mapped_column(default=1)
+    division: Mapped[str] = mapped_column(String(20), default="Bronze")
+    division_points: Mapped[int] = mapped_column(default=0)
+
+
+class Gameweek(Base):
+    __tablename__ = "gameweeks"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid)
+    number: Mapped[int] = mapped_column(unique=True)
+    start_date: Mapped[object] = mapped_column(Date)
+    end_date: Mapped[object] = mapped_column(Date)
+    status: Mapped[str] = mapped_column(String(12), default="open")  # open | scored
+
+
+class GameweekResult(Base):
+    __tablename__ = "gameweek_results"
+    __table_args__ = (
+        UniqueConstraint("gameweek_id", "user_id", name="uq_gw_user"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid)
+    gameweek_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("gameweeks.id"), index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    division: Mapped[str] = mapped_column(String(20))
+    score: Mapped[float] = mapped_column(default=0.0)  # portfolio return that week
+    rank: Mapped[int] = mapped_column(default=0)
+    xp_awarded: Mapped[int] = mapped_column(default=0)
+    points_awarded: Mapped[int] = mapped_column(default=0)
 
 
 class Instrument(Base):

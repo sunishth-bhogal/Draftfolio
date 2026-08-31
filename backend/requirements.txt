@@ -14,3 +14,6 @@ pytest==8.3.4
 hypothesis==6.123.2
 httpx==0.28.1
 curl_cffi==0.16.2
+bcrypt==5.0.0
+PyJWT==2.13.0
+email-validator==2.3.0
