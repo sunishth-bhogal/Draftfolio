@@ -1,8 +1,8 @@
 """initial schema
 
-Revision ID: 3a7a3467f28d
+Revision ID: fcbe21513f88
 Revises: 
-Create Date: 2026-08-31 19:35:52.238186
+Create Date: 2026-09-01 01:32:17.807363
 """
 from typing import Sequence, Union
 
@@ -10,7 +10,7 @@ from alembic import op
 import sqlalchemy as sa
 import app.models.base
 
-revision: str = '3a7a3467f28d'
+revision: str = 'fcbe21513f88'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -57,6 +57,7 @@ def upgrade() -> None:
     sa.Column('division', sa.String(length=20), nullable=False),
     sa.Column('division_points', sa.Integer(), nullable=False),
     sa.Column('last_claim_date', sa.Date(), nullable=True),
+    sa.Column('last_pack_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('login_streak', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email'),

@@ -1,4 +1,4 @@
-"""Daily pack — claim status + claim."""
+"""Player pack — cooldown status + open."""
 
 from __future__ import annotations
 
@@ -9,34 +9,39 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models import User
 from app.services import auth as auth_svc
-from app.services import daily
+from app.services import daily as pack
 
 router = APIRouter()
 
 
 class StatusOut(BaseModel):
     can_claim: bool
+    seconds_remaining: int
     streak: int
-    next_reward_estimate: int
+    cooldown_hours: int
 
 
-class ClaimOut(BaseModel):
-    reward: int
-    streak: int
-    is_welcome: bool
+class PackOut(BaseModel):
+    instrument_id: str
+    player: str
+    sport: str | None
+    headshot_url: str | None
+    tier: str
+    shares: int
+    value: float
     xp_awarded: int
-    new_cash: float
+    streak: int
 
 
-@router.get("/daily/status", response_model=StatusOut)
-def daily_status(user: User = Depends(auth_svc.current_user), db: Session = Depends(get_db)) -> StatusOut:
-    return StatusOut(**daily.status(db, user).__dict__)
+@router.get("/pack/status", response_model=StatusOut)
+def pack_status(user: User = Depends(auth_svc.current_user), db: Session = Depends(get_db)) -> StatusOut:
+    return StatusOut(**pack.status(db, user).__dict__)
 
 
-@router.post("/daily/claim", response_model=ClaimOut)
-def daily_claim(user: User = Depends(auth_svc.current_user), db: Session = Depends(get_db)) -> ClaimOut:
+@router.post("/pack/open", response_model=PackOut)
+def pack_open(user: User = Depends(auth_svc.current_user), db: Session = Depends(get_db)) -> PackOut:
     try:
-        res = daily.claim(db, user)
-    except daily.AlreadyClaimed:
-        raise HTTPException(status_code=409, detail="already claimed today")
-    return ClaimOut(**res.__dict__)
+        res = pack.claim(db, user)
+    except pack.OnCooldown as e:
+        raise HTTPException(status_code=409, detail=f"on cooldown ({e.seconds}s)")
+    return PackOut(**res.__dict__)

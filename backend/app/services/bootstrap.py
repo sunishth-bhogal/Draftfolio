@@ -95,3 +95,28 @@ def create_signal(
     db.add(sig)
     db.commit()
     return sig
+
+
+def grant_shares(db: Session, *, portfolio_id, instrument, quantity) -> None:
+    """Grant shares of an instrument for free (a pack reward) — an append-only
+    position leg with no cash side, the share analogue of fund_portfolio's cash
+    grant. Equity rises; reconciliation still holds (positions fold from the log)."""
+    from decimal import Decimal as _D
+
+    from app.models import Position, Transaction
+
+    db.add(
+        Transaction(
+            portfolio_id=portfolio_id,
+            order_id=None,
+            account=f"POSITION:{instrument.symbol}",
+            quantity_delta=quantity,
+            instrument_id=instrument.id,
+        )
+    )
+    pos = db.get(Position, {"portfolio_id": portfolio_id, "instrument_id": instrument.id})
+    if pos is None:
+        pos = Position(portfolio_id=portfolio_id, instrument_id=instrument.id, quantity=_D("0"))
+        db.add(pos)
+    pos.quantity = _D(pos.quantity) + quantity
+    db.commit()

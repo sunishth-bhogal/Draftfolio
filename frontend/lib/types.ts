@@ -228,18 +228,23 @@ export type Rivals = {
   standings: Standing[];
 };
 
-export type DailyStatus = {
+export type PackStatus = {
   can_claim: boolean;
+  seconds_remaining: number;
   streak: number;
-  next_reward_estimate: number;
+  cooldown_hours: number;
 };
 
-export type ClaimResult = {
-  reward: number;
-  streak: number;
-  is_welcome: boolean;
+export type PackResult = {
+  instrument_id: string;
+  player: string;
+  sport: string | null;
+  headshot_url: string | null;
+  tier: string;
+  shares: number;
+  value: number;
   xp_awarded: number;
-  new_cash: number;
+  streak: number;
 };
 
 export type Mover = {
