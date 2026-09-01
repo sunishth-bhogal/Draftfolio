@@ -120,7 +120,9 @@ def claim(db: Session, user: User, now: datetime | None = None) -> PackResult:
     if cand is None:
         raise RuntimeError("no players available")
     price = float(cand.price)
-    shares = max(1, round(PACK_VALUE / price))
+    # One share per card: a pull is worth exactly that player — pulling a star is
+    # a jackpot, and you can't launder cheap cards into an expensive one.
+    shares = 1
 
     pf = _portfolio(db, user)
     if pf is None:

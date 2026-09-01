@@ -9,6 +9,7 @@ import { PriceChart } from "@/components/PriceChart";
 import { ValueBreakdown } from "@/components/ValueBreakdown";
 import { Catalysts } from "@/components/Catalysts";
 import { Composition } from "@/components/Composition";
+import { TradePanel } from "@/components/TradePanel";
 import { Card, StatTile } from "@/components/ui";
 
 export default function PlayerPage({ params }: { params: Promise<{ id: string }> }) {
@@ -92,6 +93,8 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
         </div>
         <PriceChart data={points} />
       </Card>
+
+      <TradePanel instrumentId={id} price={current} />
 
       {isEtf ? (
         <Composition instrumentId={id} />

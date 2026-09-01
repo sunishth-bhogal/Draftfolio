@@ -33,17 +33,16 @@ def _user_with_team(db):
     return u, pf
 
 
-def test_pack_grants_a_player_worth_about_1000(db_session):
+def test_pack_grants_one_share_card(db_session):
     _player(db_session, "NBA:A", "Star A", 500)
     _player(db_session, "NBA:B", "Role B", 120)
     u, pf = _user_with_team(db_session)
 
     res = claim(db_session, u, now=datetime(2026, 5, 1, tzinfo=timezone.utc))
-    assert res.shares >= 1
-    assert 700 <= res.value <= 1300  # ~$1,000 of the pulled player
-    # A position was granted to the team.
+    assert res.shares == 1  # one card = one share
+    assert res.value in (500.0, 120.0)  # worth exactly the pulled player's price
     pos = db_session.query(Position).filter_by(portfolio_id=pf.id).all()
-    assert len(pos) == 1 and float(pos[0].quantity) == res.shares
+    assert len(pos) == 1 and float(pos[0].quantity) == 1
 
 
 def test_cannot_open_within_cooldown(db_session):

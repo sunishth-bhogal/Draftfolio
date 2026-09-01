@@ -70,6 +70,8 @@ export const api = {
   explore: () => get<Explore>("/explore"),
   packStatus: () => get<PackStatus>("/pack/status"),
   openPack: () => post<PackResult>("/pack/open", {}),
+  trade: (instrument_id: string, side: "BUY" | "SELL", shares: number) =>
+    post<{ ok: boolean; cash: number; shares_held: number; price: number }>("/trade", { instrument_id, side, shares }),
   validation: () => get<Validation>("/methodology/validation"),
   createPortfolio: (name: string, starting_cash = 100000) =>
     post<Portfolio>("/portfolios", { name, starting_cash }),
