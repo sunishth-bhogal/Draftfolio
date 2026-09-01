@@ -280,3 +280,35 @@ export type Explore = {
   popular: PopularItem[];
   ipos: Ipo[];
 };
+
+export type StoreTier = {
+  key: string;
+  name: string;
+  cost: number;
+  cards: number;
+  weights: Record<string, number>;
+  guarantee: string | null;
+  blurb: string;
+};
+
+export type StoreInfo = {
+  cash: number;
+  tiers: StoreTier[];
+};
+
+export type PulledCard = {
+  instrument_id: string;
+  player: string;
+  sport: string | null;
+  headshot_url: string | null;
+  tier: string;
+  value: number;
+};
+
+export type OpenResult = {
+  tier: string;
+  cost: number;
+  cards: PulledCard[];
+  total_value: number;
+  cash: number;
+};

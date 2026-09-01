@@ -8,8 +8,10 @@ import type {
   Composition,
   Leaderboard,
   Explore,
+  OpenResult,
   PackResult,
   PackStatus,
+  StoreInfo,
   Me,
   Portfolio,
   PricePoint,
@@ -72,6 +74,8 @@ export const api = {
   openPack: () => post<PackResult>("/pack/open", {}),
   trade: (instrument_id: string, side: "BUY" | "SELL", shares: number) =>
     post<{ ok: boolean; cash: number; shares_held: number; price: number }>("/trade", { instrument_id, side, shares }),
+  store: () => get<StoreInfo>("/store"),
+  openStorePack: (tier: string) => post<OpenResult>("/store/open", { tier }),
   validation: () => get<Validation>("/methodology/validation"),
   createPortfolio: (name: string, starting_cash = 100000) =>
     post<Portfolio>("/portfolios", { name, starting_cash }),

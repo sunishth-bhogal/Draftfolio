@@ -150,8 +150,8 @@ export default function Home() {
                 Browse the market
               </Link>{" "}
               or{" "}
-              <Link href="/draft" className="text-accent-deep underline underline-offset-4">
-                draft a portfolio
+              <Link href="/packs" className="text-accent-deep underline underline-offset-4">
+                open a pack
               </Link>
               .
             </p>

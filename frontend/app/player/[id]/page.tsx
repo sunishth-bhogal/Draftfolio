@@ -37,8 +37,8 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
 
   return (
     <div className="space-y-8">
-      <Link href="/draft" className="text-sm text-ink-soft hover:text-ink">
-        ← Draft room
+      <Link href="/markets" className="text-sm text-ink-soft hover:text-ink">
+        ← Markets
       </Link>
 
       <section className="flex items-center gap-4">
