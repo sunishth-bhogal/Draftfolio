@@ -28,6 +28,7 @@ export function Nav() {
       <nav className="flex items-center gap-5 text-sm text-ink-soft">
         <Link href="/" className="hover:text-ink transition-colors">Portfolio</Link>
         <Link href="/markets" className="hover:text-ink transition-colors">Markets</Link>
+        <Link href="/explore" className="hover:text-ink transition-colors">Explore</Link>
         <Link href="/rivals" className="hover:text-ink transition-colors">Rivals</Link>
         <Link href="/leaderboard" className="hover:text-ink transition-colors hidden sm:inline">Leaderboard</Link>
 

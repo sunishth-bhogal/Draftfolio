@@ -241,3 +241,37 @@ export type ClaimResult = {
   xp_awarded: number;
   new_cash: number;
 };
+
+export type Mover = {
+  instrument_id: string;
+  name: string;
+  sport: string | null;
+  team: string | null;
+  position: string | null;
+  headshot_url: string | null;
+  price: number;
+  change: number;
+};
+
+export type PopularItem = {
+  instrument_id: string;
+  name: string;
+  sport: string | null;
+  headshot_url: string | null;
+  price: number;
+  holders: number;
+};
+
+export type Ipo = {
+  name: string;
+  sport: string;
+  position: string;
+  note: string;
+  expected: string;
+};
+
+export type Explore = {
+  trending: Mover[];
+  popular: PopularItem[];
+  ipos: Ipo[];
+};
