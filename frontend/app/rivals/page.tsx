@@ -17,6 +17,7 @@ export default function RivalsPage() {
   const me = useQuery({ queryKey: ["me"], queryFn: () => api.me(), enabled: hasToken, retry: false });
   const rivals = useQuery({ queryKey: ["rivals"], queryFn: () => api.rivals(), enabled: hasToken, retry: false });
   const season = useQuery({ queryKey: ["season"], queryFn: () => api.season() });
+  const world = useQuery({ queryKey: ["world"], queryFn: () => api.world() });
 
   if (ready && !hasToken) {
     return (
@@ -145,6 +146,58 @@ export default function RivalsPage() {
           XP; reach {r?.promote_at ?? 10} points to promote.
         </p>
       </section>
+
+      {/* Global — against the world */}
+      {world.data && (
+        <section>
+          <div className="flex items-baseline justify-between mb-3">
+            <h2 className="font-semibold">🌍 World ranking</h2>
+            {world.data.your_rank && (
+              <span className="text-sm">
+                You&apos;re{" "}
+                <span className="num font-semibold">#{world.data.your_rank}</span> of{" "}
+                <span className="num">{world.data.total}</span>
+                {world.data.your_percentile != null && (
+                  <span className="text-accent-deep"> · top {world.data.your_percentile}%</span>
+                )}
+              </span>
+            )}
+          </div>
+          <div className="rounded-2xl border border-line bg-card overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs uppercase tracking-wide text-ink-faint border-b border-line">
+                  <th className="px-5 py-3 font-medium">#</th>
+                  <th className="px-5 py-3 font-medium">Manager</th>
+                  <th className="px-5 py-3 font-medium">Division</th>
+                  <th className="px-5 py-3 font-medium text-right">Level</th>
+                  <th className="px-5 py-3 font-medium text-right">XP</th>
+                </tr>
+              </thead>
+              <tbody>
+                {world.data.top.map((w) => (
+                  <tr key={w.rank} className={`border-b border-line last:border-0 ${w.is_me ? "bg-accent/10" : ""}`}>
+                    <td className="px-5 py-3 num text-ink-faint">
+                      {w.rank <= 3 ? ["🥇", "🥈", "🥉"][w.rank - 1] : w.rank}
+                    </td>
+                    <td className="px-5 py-3 font-medium">
+                      {w.username} {w.is_me && <span className="text-xs text-accent-deep">· you</span>}
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className="text-xs rounded-full bg-accent/20 text-accent-deep px-2 py-0.5">{w.division}</span>
+                    </td>
+                    <td className="px-5 py-3 text-right num text-ink-soft">{w.level}</td>
+                    <td className="px-5 py-3 text-right num text-ink-soft">{w.xp}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs text-ink-faint mt-3">
+            Every manager, everywhere, ranked by division then points then XP. Climb the world.
+          </p>
+        </section>
+      )}
     </div>
   );
 }

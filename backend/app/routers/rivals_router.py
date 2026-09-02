@@ -42,3 +42,30 @@ def my_rivals(user: User = Depends(auth_svc.current_user), db: Session = Depends
         relegate_at=rivals.RELEGATE_AT,
         standings=[StandingOut(**r.__dict__) for r in rows],
     )
+
+
+class WorldRowOut(BaseModel):
+    rank: int
+    username: str
+    division: str
+    level: int
+    xp: int
+    division_points: int
+    is_me: bool
+
+
+class WorldOut(BaseModel):
+    total: int
+    your_rank: int | None
+    your_percentile: float | None
+    top: list[WorldRowOut]
+
+
+@router.get("/world", response_model=WorldOut)
+def world(user=Depends(auth_svc.optional_user), db: Session = Depends(get_db)) -> WorldOut:
+    me_id = user.id if user else None
+    w = rivals.world_standings(db, me_id=me_id)
+    return WorldOut(
+        total=w.total, your_rank=w.your_rank, your_percentile=w.your_percentile,
+        top=[WorldRowOut(**r.__dict__) for r in w.top],
+    )

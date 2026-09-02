@@ -8,7 +8,7 @@ division, and climbs (or drops) divisions.
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 
 from sqlalchemy import select
@@ -144,6 +144,46 @@ class StandingRow:
     xp: int
     division_points: int
     is_me: bool
+
+
+@dataclass
+class WorldRow:
+    rank: int
+    username: str
+    division: str
+    level: int
+    xp: int
+    division_points: int
+    is_me: bool
+
+
+@dataclass
+class World:
+    total: int
+    your_rank: int | None
+    your_percentile: float | None  # top X% (lower is better)
+    top: list[WorldRow] = field(default_factory=list)
+
+
+def world_standings(db: Session, me_id: uuid.UUID | None = None, top: int = 15) -> World:
+    """Global cross-division ranking of every manager: division tier, then points,
+    then XP. The 'against the world' board."""
+    users = db.scalars(select(User).where(User.password_hash.isnot(None))).all()
+    users.sort(
+        key=lambda u: (DIVISIONS.index(u.division), u.division_points, u.xp), reverse=True
+    )
+    n = len(users)
+    your_rank = next((i + 1 for i, u in enumerate(users) if u.id == me_id), None)
+    your_pct = round(your_rank / n * 100, 1) if (your_rank and n) else None
+
+    rows = [
+        WorldRow(
+            rank=i + 1, username=u.username or u.display_name, division=u.division,
+            level=u.level, xp=u.xp, division_points=u.division_points, is_me=(u.id == me_id),
+        )
+        for i, u in enumerate(users[:top])
+    ]
+    return World(total=n, your_rank=your_rank, your_percentile=your_pct, top=rows)
 
 
 def division_standings(db: Session, division: str, me_id: uuid.UUID | None = None) -> list[StandingRow]:

@@ -324,3 +324,20 @@ export type SeasonInfo = {
   your_points: number | null;
   your_rank: number | null;
 };
+
+export type WorldRow = {
+  rank: number;
+  username: string;
+  division: string;
+  level: number;
+  xp: number;
+  division_points: number;
+  is_me: boolean;
+};
+
+export type World = {
+  total: number;
+  your_rank: number | null;
+  your_percentile: number | null;
+  top: WorldRow[];
+};
