@@ -312,3 +312,15 @@ export type OpenResult = {
   total_value: number;
   cash: number;
 };
+
+export type SeasonInfo = {
+  name: string;
+  start_date: string;
+  end_date: string;
+  total_gameweeks: number;
+  current_gameweek: number;
+  status: string;
+  your_division: string | null;
+  your_points: number | null;
+  your_rank: number | null;
+};

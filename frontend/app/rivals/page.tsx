@@ -16,6 +16,7 @@ export default function RivalsPage() {
   }, []);
   const me = useQuery({ queryKey: ["me"], queryFn: () => api.me(), enabled: hasToken, retry: false });
   const rivals = useQuery({ queryKey: ["rivals"], queryFn: () => api.rivals(), enabled: hasToken, retry: false });
+  const season = useQuery({ queryKey: ["season"], queryFn: () => api.season() });
 
   if (ready && !hasToken) {
     return (
@@ -30,9 +31,32 @@ export default function RivalsPage() {
 
   const u = me.data;
   const r = rivals.data;
+  const s = season.data;
 
   return (
     <div className="space-y-8">
+      {s && (
+        <Card>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="font-semibold">
+              Season {s.name}{" "}
+              <span className="text-xs rounded-full border border-line px-2 py-0.5 text-ink-soft ml-1">
+                {s.status}
+              </span>
+            </div>
+            <div className="text-xs text-ink-faint num">
+              Gameweek {s.current_gameweek} of {s.total_gameweeks} · {s.start_date} → {s.end_date}
+            </div>
+          </div>
+          <div className="mt-3">
+            <Bar value={s.total_gameweeks ? s.current_gameweek / s.total_gameweeks : 0} />
+          </div>
+          <p className="text-xs text-ink-faint mt-2">
+            Runs the full {s.name} season. At the finale, standings are locked, rewards paid, and
+            divisions reset — your team and net worth carry over.
+          </p>
+        </Card>
+      )}
       {u && (
         <section className="flex flex-wrap items-center justify-between gap-4">
           <div>

@@ -54,14 +54,52 @@ class User(Base):
     login_streak: Mapped[int] = mapped_column(default=0)
 
 
+class Season(Base):
+    """A Draftfolio season = a real sports season (e.g., 2025-26, Oct–Apr).
+
+    Gameweeks run its full length; at the end, standings are finalized, rewards
+    paid, and divisions reset for the next season (net worth/collection persists).
+    """
+
+    __tablename__ = "seasons"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid)
+    name: Mapped[str] = mapped_column(String(20), unique=True)  # "2025-26"
+    start_date: Mapped[object] = mapped_column(Date)
+    end_date: Mapped[object] = mapped_column(Date)
+    total_gameweeks: Mapped[int] = mapped_column(default=26)
+    status: Mapped[str] = mapped_column(String(12), default="active")  # active | ended
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
 class Gameweek(Base):
     __tablename__ = "gameweeks"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid)
+    season_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("seasons.id"), nullable=True, index=True)
     number: Mapped[int] = mapped_column(unique=True)
     start_date: Mapped[object] = mapped_column(Date)
     end_date: Mapped[object] = mapped_column(Date)
     status: Mapped[str] = mapped_column(String(12), default="open")  # open | scored
+
+
+class SeasonResult(Base):
+    """A user's finishing record for a season — for history and the hall of fame."""
+
+    __tablename__ = "season_results"
+    __table_args__ = (
+        UniqueConstraint("season_id", "user_id", name="uq_season_user"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid)
+    season_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("seasons.id"), index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    final_division: Mapped[str] = mapped_column(String(20))
+    rank: Mapped[int] = mapped_column(default=0)  # overall rank that season
+    division_points: Mapped[int] = mapped_column(default=0)
+    xp_at_end: Mapped[int] = mapped_column(default=0)
+    reward_xp: Mapped[int] = mapped_column(default=0)
+    reward_cash: Mapped[int] = mapped_column(default=0)
 
 
 class GameweekResult(Base):

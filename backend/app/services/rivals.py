@@ -70,7 +70,10 @@ def run_gameweek(db: Session, *, number: int, start: date, end: date) -> Gamewee
     apply promotion/relegation. Idempotent per (gameweek, user)."""
     gw = db.scalar(select(Gameweek).where(Gameweek.number == number))
     if gw is None:
-        gw = Gameweek(number=number, start_date=start, end_date=end)
+        from app.services.season import get_or_create_active_season
+
+        season = get_or_create_active_season(db)
+        gw = Gameweek(number=number, start_date=start, end_date=end, season_id=season.id)
         db.add(gw)
         db.flush()
 

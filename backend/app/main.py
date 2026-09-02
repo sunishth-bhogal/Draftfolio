@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import auth, catalog, daily_router, explore_router, leaderboard, orders, rivals_router, store_router, trade, valuation
+from app.routers import auth, catalog, daily_router, explore_router, leaderboard, orders, rivals_router, season_router, store_router, trade, valuation
 
 app = FastAPI(title="Draftfolio API", version="0.1.0")
 
@@ -24,6 +24,7 @@ app.include_router(daily_router.router, tags=["daily"])
 app.include_router(explore_router.router, tags=["explore"])
 app.include_router(trade.router, tags=["trade"])
 app.include_router(store_router.router, tags=["store"])
+app.include_router(season_router.router, tags=["season"])
 app.include_router(catalog.router, tags=["catalog"])
 app.include_router(orders.router, tags=["orders"])
 app.include_router(valuation.router, tags=["valuation"])

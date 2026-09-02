@@ -65,6 +65,14 @@ def current_user(request: Request, db: Session = Depends(get_db)) -> User:
     return user
 
 
+def optional_user(request: Request, db: Session = Depends(get_db)) -> User | None:
+    """Return the user if a valid Bearer token is present, else None (no error)."""
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return None
+    return _user_from_token(auth[7:], db)
+
+
 def find_by_login(db: Session, login: str) -> User | None:
     return db.scalar(
         select(User).where((User.email == login) | (User.username == login))
