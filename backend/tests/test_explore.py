@@ -62,6 +62,9 @@ def test_popular_counts_holders(db_session):
 
 
 def test_explore_includes_ipos(db_session):
+    from app.services.ipo import seed_ipos
+
+    seed_ipos(db_session)
     e = explore(db_session)
     assert len(e.ipos) >= 4
     assert any("McKenna" in i.name for i in e.ipos)

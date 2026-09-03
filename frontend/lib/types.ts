@@ -272,7 +272,10 @@ export type Ipo = {
   sport: string;
   position: string;
   note: string;
-  expected: string;
+  list_date: string;
+  ipo_price: number;
+  status: string; // upcoming | listed
+  instrument_id: string | null;
 };
 
 export type Explore = {

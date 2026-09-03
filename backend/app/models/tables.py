@@ -272,6 +272,26 @@ class PortfolioSnapshot(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 
+class Ipo(Base):
+    """A prospect scheduled to list on a date. Before it, it's 'upcoming'; on/after
+    ``list_date`` it lists — a real tradeable Instrument is created at ``ipo_price``."""
+
+    __tablename__ = "ipos"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid)
+    name: Mapped[str] = mapped_column(String(120), unique=True)
+    sport: Mapped[str] = mapped_column(String(10))
+    position: Mapped[str] = mapped_column(String(20))
+    note: Mapped[str] = mapped_column(String(200))
+    list_date: Mapped[object] = mapped_column(Date, index=True)
+    ipo_price: Mapped[int] = mapped_column(default=200)
+    status: Mapped[str] = mapped_column(String(12), default="upcoming")  # upcoming | listed
+    instrument_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("instruments.id"), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
 class EtfConstituent(Base):
     """Membership of a player-index ETF: which players it holds, and at what weight.
 

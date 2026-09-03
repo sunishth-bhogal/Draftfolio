@@ -37,7 +37,10 @@ class IpoOut(BaseModel):
     sport: str
     position: str
     note: str
-    expected: str
+    list_date: str
+    ipo_price: int
+    status: str
+    instrument_id: str | None
 
 
 class ExploreOut(BaseModel):
@@ -52,5 +55,5 @@ def explore(db: Session = Depends(get_db)) -> ExploreOut:
     return ExploreOut(
         trending=[MoverOut(**m.__dict__) for m in e.trending],
         popular=[PopularOut(**p.__dict__) for p in e.popular],
-        ipos=[IpoOut(**i.__dict__) for i in e.ipos],
+        ipos=[IpoOut(name=i.name, sport=i.sport, position=i.position, note=i.note, list_date=str(i.list_date), ipo_price=i.ipo_price, status=i.status, instrument_id=i.instrument_id) for i in e.ipos],
     )

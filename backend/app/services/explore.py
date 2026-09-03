@@ -34,30 +34,10 @@ class PopularRow:
 
 
 @dataclass
-class Ipo:
-    name: str
-    sport: str
-    position: str
-    note: str
-    expected: str
-
-
-@dataclass
 class Explore:
     trending: list[MoverRow] = field(default_factory=list)
     popular: list[PopularRow] = field(default_factory=list)
-    ipos: list[Ipo] = field(default_factory=list)
-
-
-# Real, hyped 2026 prospects — listed as "coming soon" (not tradeable yet).
-UPCOMING_IPOS = [
-    Ipo("AJ Dybantsa", "NBA", "F", "Consensus #1 college prospect", "2026 IPO"),
-    Ipo("Darryn Peterson", "NBA", "G", "Elite two-way guard", "2026 IPO"),
-    Ipo("Cameron Boozer", "NBA", "F", "Dominant frontcourt prospect", "2026 IPO"),
-    Ipo("Gavin McKenna", "NHL", "LW", "Generational winger, #1 overall buzz", "2026 IPO"),
-    Ipo("Michael Misa", "NHL", "C", "Dynamic playmaking centre", "2026 IPO"),
-    Ipo("Cayden Boozer", "NBA", "G", "Floor general, high feel", "2026 IPO"),
-]
+    ipos: list = field(default_factory=list)  # ipo.IpoOut
 
 
 def trending(db: Session, top: int = 8) -> list[MoverRow]:
@@ -143,4 +123,6 @@ def popular(db: Session, top: int = 8) -> list[PopularRow]:
 
 
 def explore(db: Session) -> Explore:
-    return Explore(trending=trending(db), popular=popular(db), ipos=UPCOMING_IPOS)
+    from app.services.ipo import list_ipos
+
+    return Explore(trending=trending(db), popular=popular(db), ipos=list_ipos(db))

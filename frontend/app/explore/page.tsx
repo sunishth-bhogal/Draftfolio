@@ -105,21 +105,41 @@ export default function ExplorePage() {
           <span className="text-xs text-ink-faint">listing soon · not tradeable yet</span>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {(data?.ipos ?? []).map((ipo) => (
-            <div
-              key={ipo.name}
-              className="rounded-2xl border border-line bg-gradient-to-br from-accent/15 to-card p-5 flex flex-col"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-3xl">{icon(ipo.sport)}</span>
-                <span className="text-[11px] rounded-full bg-ink text-cream px-2 py-0.5">{ipo.expected}</span>
+          {(data?.ipos ?? []).map((ipo) => {
+            const listed = ipo.status === "listed" && ipo.instrument_id;
+            const days = Math.ceil((new Date(ipo.list_date).getTime() - Date.now()) / 86400000);
+            const card = (
+              <div className="rounded-2xl border border-line bg-gradient-to-br from-accent/15 to-card p-5 flex flex-col h-full">
+                <div className="flex items-center justify-between">
+                  <span className="text-3xl">{icon(ipo.sport)}</span>
+                  <span
+                    className={`text-[11px] rounded-full px-2 py-0.5 ${
+                      listed ? "bg-up text-cream" : "bg-ink text-cream"
+                    }`}
+                  >
+                    {listed ? "Now trading" : days > 0 ? `Lists in ${days}d` : "Listing"}
+                  </span>
+                </div>
+                <div className="font-semibold text-lg mt-3">{ipo.name}</div>
+                <div className="text-xs text-ink-faint">{ipo.position} · {ipo.sport}</div>
+                <div className="text-sm text-ink-soft mt-2 flex-1">{ipo.note}</div>
+                <div className="mt-3 border-t border-line pt-2 flex items-center justify-between text-xs">
+                  <span className="text-ink-faint num">
+                    {listed ? "Price" : `IPO ${ipo.list_date}`}
+                  </span>
+                  <span className="num font-medium">{money2(ipo.ipo_price)}</span>
+                </div>
+                {listed && (
+                  <div className="mt-2 text-center text-sm text-accent-deep font-medium">Trade now →</div>
+                )}
               </div>
-              <div className="font-semibold text-lg mt-3">{ipo.name}</div>
-              <div className="text-xs text-ink-faint">{ipo.position} · {ipo.sport}</div>
-              <div className="text-sm text-ink-soft mt-2 flex-1">{ipo.note}</div>
-              <div className="mt-3 text-xs text-ink-faint border-t border-line pt-2">Coming soon</div>
-            </div>
-          ))}
+            );
+            return listed ? (
+              <Link key={ipo.name} href={`/player/${ipo.instrument_id}`}>{card}</Link>
+            ) : (
+              <div key={ipo.name}>{card}</div>
+            );
+          })}
         </div>
       </section>
     </div>

@@ -1,8 +1,8 @@
 """initial schema
 
-Revision ID: 84b3f5ee068b
+Revision ID: e9303aa8c72c
 Revises: 
-Create Date: 2026-09-02 02:17:22.723148
+Create Date: 2026-09-03 02:11:01.617697
 """
 from typing import Sequence, Union
 
@@ -10,7 +10,7 @@ from alembic import op
 import sqlalchemy as sa
 import app.models.base
 
-revision: str = '84b3f5ee068b'
+revision: str = 'e9303aa8c72c'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -92,6 +92,24 @@ def upgrade() -> None:
     )
     with op.batch_alter_table('gameweeks', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_gameweeks_season_id'), ['season_id'], unique=False)
+
+    op.create_table('ipos',
+    sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('name', sa.String(length=120), nullable=False),
+    sa.Column('sport', sa.String(length=10), nullable=False),
+    sa.Column('position', sa.String(length=20), nullable=False),
+    sa.Column('note', sa.String(length=200), nullable=False),
+    sa.Column('list_date', sa.Date(), nullable=False),
+    sa.Column('ipo_price', sa.Integer(), nullable=False),
+    sa.Column('status', sa.String(length=12), nullable=False),
+    sa.Column('instrument_id', sa.Uuid(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.ForeignKeyConstraint(['instrument_id'], ['instruments.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('name')
+    )
+    with op.batch_alter_table('ipos', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_ipos_list_date'), ['list_date'], unique=False)
 
     op.create_table('player_games',
     sa.Column('id', sa.Uuid(), nullable=False),
@@ -311,6 +329,10 @@ def downgrade() -> None:
         batch_op.drop_index(batch_op.f('ix_player_games_game_date'))
 
     op.drop_table('player_games')
+    with op.batch_alter_table('ipos', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_ipos_list_date'))
+
+    op.drop_table('ipos')
     with op.batch_alter_table('gameweeks', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_gameweeks_season_id'))
 
