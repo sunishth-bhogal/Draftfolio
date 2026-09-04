@@ -9,6 +9,22 @@ import { money, money2, signedPct, upDown } from "@/lib/format";
 import { EquityChart } from "@/components/EquityChart";
 import { Card, Bar } from "@/components/ui";
 import { DailyPack } from "@/components/DailyPack";
+import type { ReturnPoint } from "@/lib/types";
+
+const RANGES = ["1W", "1M", "3M", "6M", "YTD", "ALL"] as const;
+type Range = (typeof RANGES)[number];
+
+/** Trim a return series to the selected lookback window. */
+function windowed(series: ReturnPoint[], range: Range): ReturnPoint[] {
+  if (range === "ALL" || series.length === 0) return series;
+  const last = new Date(series[series.length - 1].snapshot_date);
+  const days =
+    range === "1W" ? 7 : range === "1M" ? 30 : range === "3M" ? 90 : range === "6M" ? 180 : NaN;
+  const cutoff =
+    range === "YTD" ? +new Date(last.getFullYear(), 0, 1) : +last - days * 86_400_000;
+  const w = series.filter((p) => +new Date(p.snapshot_date) >= cutoff);
+  return w.length >= 2 ? w : series; // never blank the chart on a sparse window
+}
 
 export default function Home() {
   const [hasToken, setHasToken] = useState(false);
@@ -30,6 +46,9 @@ export default function Home() {
     queryFn: () => api.returns(pid!),
     enabled: !!pid,
   });
+
+  const [range, setRange] = useState<Range>("ALL");
+  const [mode, setMode] = useState<"Value" | "Returns">("Value");
 
   const v = valuation.data;
   const series = returns.data ?? [];
@@ -94,8 +113,36 @@ export default function Home() {
       </section>
 
       {series.length >= 2 && (
-        <Card>
-          <EquityChart data={series} />
+        <Card className="p-4 sm:p-5">
+          <EquityChart data={windowed(series, range)} field={mode === "Value" ? "equity" : "cumulative_return"} />
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-1">
+              {RANGES.map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setRange(r)}
+                  className={`num rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${
+                    range === r ? "bg-elevated text-ink" : "text-ink-faint hover:text-ink"
+                  }`}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center rounded-lg border border-line p-0.5 text-xs">
+              {(["Value", "Returns"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMode(m)}
+                  className={`rounded-md px-3 py-1 font-medium transition-colors ${
+                    mode === m ? "bg-ink text-cream" : "text-ink-faint hover:text-ink"
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
         </Card>
       )}
 
