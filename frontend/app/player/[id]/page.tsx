@@ -43,7 +43,7 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
 
       <section className="flex items-center gap-4">
         {isEtf ? (
-          <div className="h-20 w-20 rounded-2xl bg-ink text-cream flex items-center justify-center text-2xl font-semibold">
+          <div className="h-20 w-20 rounded-2xl bg-elevated text-ink flex items-center justify-center text-2xl font-semibold">
             {inst?.sport === "NHL" ? "🏒" : inst?.sport === "MULTI" ? "★" : "🏀"}
           </div>
         ) : (

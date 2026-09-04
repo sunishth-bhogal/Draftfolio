@@ -14,7 +14,7 @@ const RARITY: Record<string, string> = {
   legendary: "text-amber-300",
   epic: "text-fuchsia-300",
   rare: "text-sky-300",
-  common: "text-cream/70",
+  common: "text-ink-soft",
 };
 
 export default function PacksPage() {
@@ -67,7 +67,7 @@ export default function PacksPage() {
 
       {/* Reveal of the latest open */}
       {opened && (
-        <div className="rounded-2xl bg-ink text-cream p-6">
+        <div className="rounded-2xl bg-elevated text-ink p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="font-semibold">
               You opened a {opened.tier} pack — pulled {opened.cards.length}{" "}
@@ -82,18 +82,18 @@ export default function PacksPage() {
               <Link
                 key={i}
                 href={`/player/${c.instrument_id}`}
-                className="rounded-xl bg-cream/5 border border-cream/10 p-3 flex items-center gap-3 hover:bg-cream/10"
+                className="rounded-xl bg-white/5 border border-line p-3 flex items-center gap-3 hover:bg-white/10"
               >
                 {c.headshot_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={c.headshot_url} alt="" className="h-11 w-11 rounded-full object-cover bg-cream/10" />
+                  <img src={c.headshot_url} alt="" className="h-11 w-11 rounded-full object-cover bg-white/5" />
                 ) : (
-                  <div className="h-11 w-11 rounded-lg bg-cream/10 flex items-center justify-center">🏒</div>
+                  <div className="h-11 w-11 rounded-lg bg-white/5 flex items-center justify-center">🏒</div>
                 )}
                 <div className="min-w-0">
-                  <div className={`text-xs uppercase ${RARITY[c.tier] ?? "text-cream/60"}`}>{c.tier}</div>
+                  <div className={`text-xs uppercase ${RARITY[c.tier] ?? "text-ink-soft"}`}>{c.tier}</div>
                   <div className="font-medium truncate">{c.player}</div>
-                  <div className="num text-xs text-cream/60">{money2(c.value)}</div>
+                  <div className="num text-xs text-ink-soft">{money2(c.value)}</div>
                 </div>
               </Link>
             ))}

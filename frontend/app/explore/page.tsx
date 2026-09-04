@@ -16,7 +16,7 @@ function Avatar({ url, sport, size = "h-11 w-11" }: { url: string | null; sport:
     // eslint-disable-next-line @next/next/no-img-element
     <img src={url} alt="" className={`${size} rounded-full bg-cream object-cover border border-line`} />
   ) : (
-    <div className={`${size} rounded-lg bg-ink text-cream flex items-center justify-center`}>{icon(sport)}</div>
+    <div className={`${size} rounded-lg bg-elevated text-ink flex items-center justify-center`}>{icon(sport)}</div>
   );
 }
 
@@ -38,16 +38,16 @@ export default function ExplorePage() {
         <section>
           <div className="text-xs uppercase tracking-wide text-ink-faint mb-2">🔥 Mover of the moment</div>
           <Link href={`/player/${spotlight.instrument_id}`}>
-            <div className="rounded-3xl bg-ink text-cream p-6 sm:p-8 flex items-center gap-6 hover:opacity-95 transition overflow-hidden relative">
+            <div className="rounded-3xl bg-elevated text-ink p-6 sm:p-8 flex items-center gap-6 hover:opacity-95 transition overflow-hidden relative">
               <div className="absolute -right-8 -top-10 text-[10rem] opacity-10 select-none">{icon(spotlight.sport)}</div>
               <Avatar url={spotlight.headshot_url} sport={spotlight.sport} size="h-24 w-24" />
               <div className="flex-1 min-w-0 relative">
-                <div className="text-cream/60 text-sm">{spotlight.position ?? "?"} · {spotlight.team ?? ""}</div>
+                <div className="text-ink-soft text-sm">{spotlight.position ?? "?"} · {spotlight.team ?? ""}</div>
                 <div className="text-3xl font-semibold truncate">{spotlight.name}</div>
                 <div className="mt-2 flex items-baseline gap-3">
                   <span className="num text-2xl">{money2(spotlight.price)}</span>
                   <span className="num text-lg text-accent font-semibold">{signedPct(spotlight.change)}</span>
-                  <span className="text-cream/50 text-xs">last 6 games</span>
+                  <span className="text-ink-faint text-xs">last 6 games</span>
                 </div>
               </div>
             </div>

@@ -1,18 +1,19 @@
 @import "tailwindcss";
 
-/* Design language: "premium financial product with a sports pulse."
-   Warm off-white, near-black type, one lime accent, big tabular numbers. */
+/* Design language: "a focused trading terminal with a sports pulse."
+   Near-black canvas, graphite cards, one lime accent, big tabular numbers. */
 @theme {
-  --color-cream: #faf8f2;
-  --color-card: #ffffff;
-  --color-ink: #141210;
-  --color-ink-soft: #6b655c;
-  --color-ink-faint: #9a938a;
-  --color-line: #e9e3d6;
-  --color-accent: #c3f53c;
-  --color-accent-deep: #3d4a12;
-  --color-up: #137a56;
-  --color-down: #c23b2b;
+  --color-cream: #0a0b0d;        /* page canvas */
+  --color-card: #131619;         /* card surface */
+  --color-elevated: #1c2126;     /* raised hero / reveal surface */
+  --color-ink: #e9edea;          /* primary text · high-contrast surface */
+  --color-ink-soft: #9aa39d;     /* secondary text */
+  --color-ink-faint: #616a64;    /* tertiary text */
+  --color-line: #23272b;         /* hairline borders */
+  --color-accent: #c3f53c;       /* lime pulse */
+  --color-accent-deep: #cbf85a;  /* accent text (bright on dark) */
+  --color-up: #33d17e;           /* gains */
+  --color-down: #ff5d52;         /* losses */
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
@@ -22,7 +23,27 @@ html,
 body {
   background: var(--color-cream);
   color: var(--color-ink);
+  color-scheme: dark;
   -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: #0a0b0d;
+}
+
+/* Slim dark scrollbars to match the canvas. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 9999px;
 }
 
 /* Financial figures: tight, aligned, unmistakably numeric. */

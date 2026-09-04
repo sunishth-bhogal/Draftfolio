@@ -17,13 +17,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>
-          <header className="border-b border-line bg-cream/80 backdrop-blur sticky top-0 z-10">
-            <Nav />
-          </header>
-          <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
-          <footer className="mx-auto max-w-6xl px-6 py-10 text-xs text-ink-faint border-t border-line mt-10">
-            Signals are correlation, not causation. Prices are delayed / point-in-time.
-          </footer>
+          <Nav />
+          <div className="pl-[74px]">
+            <main className="mx-auto max-w-6xl px-6 py-8 sm:px-10">{children}</main>
+            <footer className="mx-auto max-w-6xl px-6 py-10 sm:px-10 text-xs text-ink-faint border-t border-line mt-10">
+              Signals are correlation, not causation. Prices are delayed / point-in-time.
+            </footer>
+          </div>
         </Providers>
       </body>
     </html>

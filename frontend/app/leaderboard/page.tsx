@@ -85,7 +85,7 @@ export default function Home() {
               </thead>
               <tbody>
                 {data.rows.map((r) => (
-                  <tr key={r.portfolio_id} className="border-b border-line last:border-0 hover:bg-cream/60">
+                  <tr key={r.portfolio_id} className="border-b border-line last:border-0 hover:bg-elevated/50">
                     <td className="px-5 py-4 num text-ink-faint">{r.rank}</td>
                     <td className="px-5 py-4">
                       <Link href={`/portfolio/${r.portfolio_id}`} className="font-medium hover:text-accent-deep">

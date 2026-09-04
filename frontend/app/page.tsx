@@ -60,18 +60,23 @@ export default function Home() {
     );
   }
 
+  const hour = new Date().getHours();
+  const partOfDay = hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening";
+  const name = me.data?.display_name || me.data?.username || "";
+
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="text-sm text-ink-soft">
-          {me.data?.username}&apos;s team ·{" "}
-          <span className="rounded-full bg-accent/30 text-accent-deep px-2 py-0.5 text-xs">
-            {me.data?.division}
-          </span>
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Good {partOfDay}, {name}</h1>
+          <div className="mt-1 flex items-center gap-2 text-sm text-ink-soft">
+            <span>{me.data?.username}&apos;s team</span>
+            <span className="rounded-full bg-accent/20 text-accent-deep px-2 py-0.5 text-xs">{me.data?.division}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-4 text-sm">
-          <Link href="/markets" className="text-ink-soft hover:text-ink">Browse markets →</Link>
-          <Link href="/rivals" className="text-ink-soft hover:text-ink">Rivals →</Link>
+        <div className="flex items-center gap-2 text-sm">
+          <Link href="/markets" className="rounded-full border border-line px-4 py-2 font-medium hover:border-ink transition-colors">Trade</Link>
+          <Link href="/packs" className="rounded-full bg-ink text-cream px-4 py-2 font-medium hover:opacity-90">Open a pack</Link>
         </div>
       </div>
 
@@ -111,7 +116,7 @@ export default function Home() {
               </thead>
               <tbody>
                 {v.holdings.map((h) => (
-                  <tr key={h.instrument_id} className="border-b border-line last:border-0 hover:bg-cream/60">
+                  <tr key={h.instrument_id} className="border-b border-line last:border-0 hover:bg-elevated/50">
                     <td className="px-5 py-4">
                       <Link href={`/player/${h.instrument_id}`} className="font-medium hover:text-accent-deep">
                         {h.name}
@@ -131,7 +136,7 @@ export default function Home() {
                   </tr>
                 ))}
                 {v.cash > 0 && (
-                  <tr className="hover:bg-cream/60">
+                  <tr className="hover:bg-elevated/50">
                     <td className="px-5 py-4 text-ink-soft">Cash</td>
                     <td />
                     <td />

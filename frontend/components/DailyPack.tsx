@@ -11,7 +11,7 @@ const TIER_STYLE: Record<string, string> = {
   legendary: "text-amber-300",
   epic: "text-fuchsia-300",
   rare: "text-sky-300",
-  common: "text-cream/70",
+  common: "text-ink-soft",
 };
 
 function fmt(seconds: number) {
@@ -43,19 +43,19 @@ export function DailyPack() {
   if (pull) {
     return (
       <Link href={`/player/${pull.instrument_id}`}>
-        <div className="rounded-2xl bg-ink text-cream p-6 flex items-center gap-5 hover:opacity-95 transition">
+        <div className="rounded-2xl bg-elevated text-ink p-6 flex items-center gap-5 hover:opacity-95 transition">
           {pull.headshot_url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={pull.headshot_url} alt="" className="h-16 w-16 rounded-full object-cover border border-cream/20 bg-cream/10" />
+            <img src={pull.headshot_url} alt="" className="h-16 w-16 rounded-full object-cover border border-line bg-white/5" />
           ) : (
-            <div className="h-16 w-16 rounded-xl bg-cream/10 flex items-center justify-center text-3xl">🎁</div>
+            <div className="h-16 w-16 rounded-xl bg-white/5 flex items-center justify-center text-3xl">🎁</div>
           )}
           <div className="flex-1">
-            <div className={`text-xs uppercase tracking-wide ${TIER_STYLE[pull.tier] ?? "text-cream/60"}`}>
+            <div className={`text-xs uppercase tracking-wide ${TIER_STYLE[pull.tier] ?? "text-ink-soft"}`}>
               {pull.tier} pull · +{pull.xp_awarded} XP
             </div>
             <div className="text-2xl font-semibold mt-0.5">{pull.player}</div>
-            <div className="text-sm text-cream/70">
+            <div className="text-sm text-ink-soft">
               {pull.shares} shares · {money(pull.value)} added to your team →
             </div>
           </div>

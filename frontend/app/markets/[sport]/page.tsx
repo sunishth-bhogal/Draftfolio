@@ -80,7 +80,7 @@ export default function SportPage({ params }: { params: Promise<{ sport: string 
               <div key={team} className="rounded-2xl border border-line bg-card overflow-hidden">
                 <button
                   onClick={() => setOpen(expanded ? null : team)}
-                  className="w-full flex items-center justify-between px-5 py-3 hover:bg-cream/60"
+                  className="w-full flex items-center justify-between px-5 py-3 hover:bg-elevated/50"
                 >
                   <span className="font-medium">{team}</span>
                   <span className="text-xs text-ink-faint num">
@@ -108,13 +108,13 @@ function PlayerRow({ i, isIndex = false }: { i: Instrument; isIndex?: boolean })
   return (
     <Link
       href={`/player/${i.id}`}
-      className="flex items-center gap-3 px-5 py-3 border-b border-line last:border-0 hover:bg-cream/60"
+      className="flex items-center gap-3 px-5 py-3 border-b border-line last:border-0 hover:bg-elevated/50"
     >
       {i.headshot_url ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={i.headshot_url} alt={i.name} className="h-9 w-9 rounded-full bg-cream object-cover border border-line" />
       ) : (
-        <div className="h-9 w-9 rounded-lg bg-ink text-cream flex items-center justify-center text-sm">
+        <div className="h-9 w-9 rounded-lg bg-elevated text-ink flex items-center justify-center text-sm">
           {i.sport === "NHL" ? "🏒" : i.sport === "MULTI" ? "★" : "🏀"}
         </div>
       )}
