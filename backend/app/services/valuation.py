@@ -38,6 +38,7 @@ class Holding:
     price: Decimal
     market_value: Decimal
     weight: Decimal  # fraction of equity
+    day_change: Decimal | None = None  # fractional move vs. the prior known close
 
 
 @dataclass
@@ -63,6 +64,32 @@ def latest_close(
         .limit(1)
     )
     return Decimal(row.close) if row is not None else None
+
+
+def latest_close_and_change(
+    db: Session, instrument_id: uuid.UUID, as_of: datetime
+) -> tuple[Decimal | None, Decimal | None]:
+    """Latest known close and its fractional move vs. the prior close.
+
+    Uses the two most recent bars known by ``as_of`` (look-ahead safe). Returns
+    ``(None, None)`` when unpriced and ``(price, None)`` when only one bar exists.
+    """
+    rows = list(
+        db.scalars(
+            select(PriceBar)
+            .where(PriceBar.instrument_id == instrument_id, PriceBar.as_of <= as_of)
+            .order_by(PriceBar.bar_date.desc())
+            .limit(2)
+        )
+    )
+    if not rows:
+        return None, None
+    latest = Decimal(rows[0].close)
+    if len(rows) < 2:
+        return latest, None
+    prev = Decimal(rows[1].close)
+    change = (latest / prev - 1) if prev != 0 else None
+    return latest, change
 
 
 def close_asof_date(
@@ -121,13 +148,13 @@ def value_portfolio(
         if inst.currency != base_currency:
             fx_pending.append(inst.symbol)
             continue
-        price = latest_close(db, inst.id, as_of)
+        price, day_chg = latest_close_and_change(db, inst.id, as_of)
         if price is None:
             unpriced.append(inst.symbol)
             continue
         mv = (qty * price).quantize(Decimal("0.0001"))
         market_value += mv
-        holdings.append(Holding(inst.id, inst.symbol, inst.name, qty, price, mv, Decimal("0")))
+        holdings.append(Holding(inst.id, inst.symbol, inst.name, qty, price, mv, Decimal("0"), day_chg))
 
     equity = (cash + market_value).quantize(Decimal("0.0001"))
     # Fill in weights now that we know equity.

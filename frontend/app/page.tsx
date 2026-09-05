@@ -197,9 +197,19 @@ export default function Home() {
                       <div className="truncate text-sm font-medium">{h.name}</div>
                       <div className="num text-xs text-ink-faint">{h.quantity} @ {money2(h.price)}</div>
                     </div>
-                    <div className="text-right">
+                    <div className="flex flex-col items-end gap-1">
                       <div className="num text-sm font-medium">{money(h.market_value)}</div>
-                      <div className="num text-xs text-ink-faint">{(h.weight * 100).toFixed(0)}%</div>
+                      {h.day_change != null ? (
+                        <span
+                          className={`num rounded-md px-1.5 py-0.5 text-xs font-medium ${
+                            h.day_change >= 0 ? "bg-up/15 text-up" : "bg-down/15 text-down"
+                          }`}
+                        >
+                          {signedPct(h.day_change)}
+                        </span>
+                      ) : (
+                        <span className="num text-xs text-ink-faint">{(h.weight * 100).toFixed(0)}%</span>
+                      )}
                     </div>
                   </Link>
                 ))}

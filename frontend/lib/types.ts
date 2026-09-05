@@ -26,6 +26,7 @@ export type Holding = {
   price: number;
   market_value: number;
   weight: number;
+  day_change: number | null;
 };
 
 export type Valuation = {

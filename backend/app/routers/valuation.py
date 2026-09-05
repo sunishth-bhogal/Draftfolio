@@ -26,6 +26,7 @@ class HoldingOut(BaseModel):
     price: float
     market_value: float
     weight: float
+    day_change: float | None = None
 
 
 class ValuationOut(BaseModel):
@@ -97,6 +98,7 @@ def get_valuation(portfolio_id: uuid.UUID, db: Session = Depends(get_db)) -> Val
                 price=float(h.price),
                 market_value=float(h.market_value),
                 weight=float(h.weight),
+                day_change=float(h.day_change) if h.day_change is not None else None,
             )
             for h in v.holdings
         ],
